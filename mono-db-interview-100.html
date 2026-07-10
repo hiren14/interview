@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB 100-Question Master Practice Bank</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @custom-variant dark (&:where(.dark, .dark *));
+
+        :root {
+            --paper: #FAF7F1;
+            --paper-line: #E7E0D3;
+            --ink: #2B2620;
+        }
+
+        * { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        body {
+            background-color: var(--paper);
+            background-image:
+                linear-gradient(var(--paper-line) 1px, transparent 1px);
+            background-size: 100% 2.1rem;
+        }
+        .dark body {
+            background-color: #0F1417;
+            background-image: linear-gradient(#1C2226 1px, transparent 1px);
+            background-size: 100% 2.1rem;
+        }
+
+        /* Custom smooth scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbbfa3; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #3a4650; }
+        ::-webkit-scrollbar-thumb:hover { background: #b0a184; }
+
+        /* Card catalog punch hole + tab */
+        .catalog-hole {
+            width: 10px; height: 10px; border-radius: 9999px;
+            background: var(--paper);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+            border: 1px solid var(--paper-line);
+        }
+        .dark .catalog-hole {
+            background: #0F1417;
+            border-color: #2A3339;
+        }
+
+        .catalog-card {
+            background: #FFFDF9;
+            border: 1px solid var(--paper-line);
+        }
+        .dark .catalog-card {
+            background: #151B1F;
+            border-color: #263038;
+        }
+
+        .terminal-box {
+            background: #1B1F1C;
+            color: #B9F6C4;
+        }
+
+        @keyframes unfold {
+            from { opacity: 0; transform: translateY(-6px) scaleY(0.96); transform-origin: top; }
+            to { opacity: 1; transform: translateY(0) scaleY(1); transform-origin: top; }
+        }
+        .animate-unfold { animation: unfold 0.22s ease-out; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .animate-unfold { animation: none; }
+        }
+
+        button:focus-visible, input:focus-visible {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body class="text-[var(--ink)] dark:text-slate-200 antialiased min-h-screen pb-16 transition-colors duration-200">
+
+    <header class="bg-[#FFFDF9]/90 dark:bg-[#10151A]/90 backdrop-blur-sm border-b border-[var(--paper-line)] dark:border-[#263038] sticky top-0 z-50 transition-colors duration-200">
+        <div class="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <p class="font-mono text-[11px] tracking-[0.2em] uppercase text-emerald-700 dark:text-emerald-400 mb-1">Study Deck · Reference Catalog</p>
+                <h1 id="page-title" class="font-display text-3xl font-semibold text-[var(--ink)] dark:text-white tracking-tight"></h1>
+                <p id="page-level" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+            </div>
+
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="relative flex-1 sm:w-64">
+                    <input type="text" id="search-input" oninput="filterQuestions()" placeholder="Search the catalog..."
+                        class="w-full pl-9 pr-4 py-2 text-sm bg-[var(--paper)] dark:bg-[#0F1417] border border-[var(--paper-line)] dark:border-[#263038] rounded-md text-[var(--ink)] dark:text-white focus:outline-hidden focus:border-emerald-600 transition-all font-mono">
+                    <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+                </div>
+                <button onclick="toggleTheme()" class="p-2 bg-[var(--paper)] dark:bg-[#0F1417] border border-[var(--paper-line)] dark:border-[#263038] rounded-md hover:brightness-95 dark:hover:brightness-125 transition-all cursor-pointer select-none" title="Toggle Theme" aria-label="Toggle light and dark theme">
+                    <span id="theme-icon" class="text-base">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-8">
+        <div class="flex flex-col md:flex-row gap-4 md:items-stretch mb-8">
+            <div class="catalog-card rounded-xl px-5 py-4 flex-1 shadow-xs relative overflow-hidden">
+                <span class="absolute top-3 right-3 catalog-hole"></span>
+                <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Field Notes</p>
+                <p id="page-instructions" class="text-sm text-[var(--ink)] dark:text-slate-300 leading-relaxed"></p>
+            </div>
+            <div class="catalog-card rounded-xl px-5 py-4 flex items-center gap-6 shadow-xs">
+                <div>
+                    <p id="stat-total" class="font-display text-2xl font-semibold text-[var(--ink)] dark:text-white">0</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Entries</p>
+                </div>
+                <div class="w-px h-9 bg-[var(--paper-line)] dark:bg-[#263038]"></div>
+                <div>
+                    <p id="stat-topics" class="font-display text-2xl font-semibold text-[var(--ink)] dark:text-white">0</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Topics</p>
+                </div>
+                <div class="w-px h-9 bg-[var(--paper-line)] dark:bg-[#263038]"></div>
+                <div>
+                    <p id="stat-reviewed" class="font-display text-2xl font-semibold text-emerald-700 dark:text-emerald-400">0</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Reviewed</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block mb-2">Browse by Topic</label>
+            <div id="topic-filters" class="flex flex-wrap gap-2">
+                <button onclick="selectTopic('all')" id="tab-all" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-[var(--ink)] dark:bg-emerald-600 text-white shadow-xs transition-all cursor-pointer font-mono">
+                    ALL
+                </button>
+            </div>
+        </div>
+
+        <div class="text-xs font-mono text-slate-400 dark:text-slate-500 mb-4" id="stats-counter">
+            Showing 0 records
+        </div>
+
+        <div id="questions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        </div>
+
+        <div id="empty-state" class="hidden text-center py-16">
+            <p class="font-display text-xl text-slate-400 dark:text-slate-600 mb-1">No matching records</p>
+            <p class="text-sm text-slate-400 dark:text-slate-600 font-mono">try a different topic or search term</p>
+        </div>
+
+        <footer class="mt-16 pt-6 border-t border-[var(--paper-line)] dark:border-[#263038] text-center">
+            <p class="font-mono text-[11px] text-slate-400 dark:text-slate-600 tracking-wide">indexed for interview prep · db.questions.find()</p>
+        </footer>
+    </main>
+
+    <script>
+        // Your Master JSON Data
+        const dataBank = {
+  "title": "MongoDB 100-Question Master Practice Bank",
+  "level": "Covers all major topics for 2-3 yrs backend experience interviews",
+  "topics_covered": [
+    "CRUD",
+    "Indexing",
+    "Schema Design",
+    "Aggregation",
+    "Transactions",
+    "Sharding",
+    "Replication",
+    "Performance"
+  ],
+  "instructions": "Organized by topic in blocks of ~10-20. Try answering first, then check. Ask me by topic or id to review in small batches and save tokens.",
+  "questions": [
+    {
+      "id": 1,
+      "topic": "CRUD",
+      "difficulty": "easy",
+      "question": "What's the difference between find() and findOne()?",
+      "answer": "find() returns a cursor to multiple matching documents (lazy-loaded, iterable). findOne() returns a single document directly (or null), internally equivalent to find().limit(1) but returns the object itself, not a cursor."
+    },
+    {
+      "id": 2,
+      "topic": "CRUD",
+      "difficulty": "easy",
+      "question": "Difference between updateOne, updateMany, replaceOne?",
+      "answer": "updateOne/updateMany apply update operators ($set,$inc,etc.) to matched doc(s), merging changes. replaceOne fully overwrites the matched document's content (except _id) with a new document -- no merge, whole document replaced."
+    },
+    {
+      "id": 3,
+      "topic": "CRUD",
+      "difficulty": "easy",
+      "question": "What does upsert:true do in an update operation?",
+      "answer": "If no document matches the filter, upsert:true causes MongoDB to insert a new document combining the filter fields and the update fields, instead of doing nothing."
+    },
+    {
+      "id": 4,
+      "topic": "CRUD",
+      "difficulty": "easy",
+      "question": "Difference between deleteOne and remove (deprecated)?",
+      "answer": "deleteOne removes exactly one matching document. The old remove() method (deprecated in newer drivers) could delete multiple by default unless justOne:true was passed -- deleteOne/deleteMany are the clearer modern replacements."
+    },
+    {
+      "id": 5,
+      "topic": "CRUD",
+      "difficulty": "medium",
+      "question": "How do you atomically increment a field and return the updated document in one call?",
+      "answer": "Use findOneAndUpdate() with $inc and returnDocument:'after' (or new:true in older driver syntax). This does the increment and returns the updated doc atomically in a single round trip, avoiding read-then-write race conditions."
+    },
+    {
+      "id": 6,
+      "topic": "CRUD",
+      "difficulty": "medium",
+      "question": "What's the difference between $set and $setOnInsert?",
+      "answer": "$set always sets the field's value on update/insert. $setOnInsert only applies the value when the operation results in an INSERT (via upsert), and is ignored if an existing document was matched/updated -- useful for setting a createdAt field only on first insert."
+    },
+    {
+      "id": 7,
+      "topic": "CRUD",
+      "difficulty": "medium",
+      "question": "How do you insert multiple documents efficiently, and what happens if one fails partway?",
+      "answer": "Use insertMany(). By default (ordered:true), it stops at the first error and does not insert subsequent documents. With ordered:false, MongoDB attempts all inserts and reports which ones failed, continuing past errors -- faster but requires handling partial success."
+    },
+    {
+      "id": 8,
+      "topic": "CRUD",
+      "difficulty": "medium",
+      "question": "What does the projection {field:1} vs {field:0} do differently?",
+      "answer": "Inclusion projection ({field:1}) returns ONLY the specified fields (plus _id unless excluded). Exclusion projection ({field:0}) returns all fields EXCEPT the specified ones. You generally cannot mix inclusion and exclusion in the same projection (except for _id)."
+    },
+    {
+      "id": 9,
+      "topic": "CRUD",
+      "difficulty": "hard",
+      "question": "How would you implement pagination efficiently for a large collection, and why is skip() problematic at scale?",
+      "answer": "skip(n) still has to walk/scan n documents internally before returning results, making deep pagination (e.g., skip(1000000)) slow. Better approach: 'range-based'/cursor pagination -- use a sort field (e.g., _id or createdAt) and filter with $gt/$lt on the last seen value from the previous page, which uses the index directly regardless of page depth."
+    },
+    {
+      "id": 10,
+      "topic": "CRUD",
+      "difficulty": "hard",
+      "question": "What is a bulk write operation and when would you use it?",
+      "answer": "bulkWrite() lets you batch multiple different operations (inserts, updates, deletes) into a single network round trip to the server. Useful for high-throughput batch processing (e.g., syncing thousands of records) since it drastically reduces round-trip overhead vs individual calls."
+    },
+    {
+      "id": 11,
+      "topic": "Indexing",
+      "difficulty": "easy",
+      "question": "What is the ESR rule for compound indexes?",
+      "answer": "Equality, Sort, Range -- order compound index fields with equality-match fields first, sort fields second, range-filter fields last, for optimal index usage."
+    },
+    {
+      "id": 12,
+      "topic": "Indexing",
+      "difficulty": "easy",
+      "question": "What is a covered query?",
+      "answer": "A query where all requested fields (filter + projection) exist within the index itself, so MongoDB never needs to fetch the full document from disk -- avoids the FETCH stage, much faster."
+    },
+    {
+      "id": 13,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "What is a TTL index and a real use case?",
+      "answer": "An index that auto-deletes documents N seconds after a date field's value. Use case: session tokens, OTPs, temporary carts that should self-expire without manual cleanup jobs."
+    },
+    {
+      "id": 14,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "What is a partial index?",
+      "answer": "An index that only includes documents matching a specified filter expression, rather than the entire collection -- reduces index size/write overhead when you only ever query a subset (e.g., active:true documents)."
+    },
+    {
+      "id": 15,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "What is a sparse index?",
+      "answer": "An index that only includes documents where the indexed field EXISTS, skipping documents missing that field entirely -- useful for optional fields to keep the index smaller."
+    },
+    {
+      "id": 16,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "Difference between a sparse index and a partial index?",
+      "answer": "Sparse only excludes documents missing the field. Partial can filter on ANY arbitrary condition (e.g., age > 21), giving more precise control -- MongoDB generally recommends partial indexes over sparse ones for most use cases now."
+    },
+    {
+      "id": 17,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "What is a multikey index?",
+      "answer": "An index created on a field that holds an array -- MongoDB automatically creates one index entry per array element, enabling queries to match any element within the array."
+    },
+    {
+      "id": 18,
+      "topic": "Indexing",
+      "difficulty": "hard",
+      "question": "Why can you not create a compound index with more than one array field?",
+      "answer": "MongoDB would need to generate an index entry for every combination of elements across both arrays (a Cartesian product), which explodes the index size unpredictably and is disallowed to prevent this issue."
+    },
+    {
+      "id": 19,
+      "topic": "Indexing",
+      "difficulty": "hard",
+      "question": "What is index intersection and why doesn't Mongo always rely on it?",
+      "answer": "MongoDB can use two separate single-field indexes together for a query with two conditions. It's usually less efficient than one purpose-built compound index though, since it requires scanning and intersecting two index structures -- the optimizer prefers a compound index if one exists."
+    },
+    {
+      "id": 20,
+      "topic": "Indexing",
+      "difficulty": "hard",
+      "question": "What's the difference between a wildcard index and creating individual indexes per field?",
+      "answer": "A wildcard index ({'\\$**':1}) automatically indexes all fields (or a specified subset via wildcardProjection) without needing to predict field names in advance -- useful for schemas with dynamic/unpredictable fields, at the cost of larger index size and generally less optimal performance than a targeted compound index."
+    },
+    {
+      "id": 21,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "How do you check if a query is actually using an index?",
+      "answer": "Run .explain('executionStats') and check the winningPlan stage -- look for IXSCAN (index used) vs COLLSCAN (full collection scan, no index used)."
+    },
+    {
+      "id": 22,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "What does background:true (or the newer default) mean when building an index?",
+      "answer": "It means the index build doesn't hold an exclusive/blocking lock for the entire operation, letting reads/writes continue on the collection while the index is being built -- important for production systems with large collections where a blocking build would cause downtime."
+    },
+    {
+      "id": 23,
+      "topic": "Indexing",
+      "difficulty": "hard",
+      "question": "What happens to query performance if you create too many indexes on a collection?",
+      "answer": "Each additional index adds write overhead (every insert/update/delete must also update all relevant indexes), increases storage/memory usage, and can slow down write-heavy workloads -- there's a tradeoff between read speed and write speed/storage cost."
+    },
+    {
+      "id": 24,
+      "topic": "Indexing",
+      "difficulty": "medium",
+      "question": "What is the difference between a unique index and a unique constraint via application code?",
+      "answer": "A unique index is enforced at the database level -- MongoDB itself rejects any insert/update that would violate uniqueness, even under concurrent writes. Application-level checks (read-then-write) are prone to race conditions where two concurrent requests both pass the check before either writes."
+    },
+    {
+      "id": 25,
+      "topic": "Indexing",
+      "difficulty": "hard",
+      "question": "How would you design an index for a query that filters on 'category' (equality), sorts by 'rating' descending, and also filters 'price' with a range?",
+      "answer": "{category:1, rating:-1, price:1} following ESR: category (equality) first, rating (sort) second, price (range) last -- lets MongoDB narrow by category, return already-sorted-by-rating results, and apply the price range filter last within that sorted-narrowed set."
+    },
+    {
+      "id": 26,
+      "topic": "Schema Design",
+      "difficulty": "easy",
+      "question": "When should you embed vs reference?",
+      "answer": "Embed for 1-to-few relationships, data read together, doesn't grow unboundedly. Reference for 1-to-many/many-to-many, independently accessed data, or data that could exceed the 16MB document limit if embedded."
+    },
+    {
+      "id": 27,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "What is the Extended Reference Pattern?",
+      "answer": "Duplicating a few frequently-needed fields (e.g., customerName, tier) alongside a reference/foreign key, so common reads don't require a $lookup/join -- tradeoff is needing to update duplicated fields if the source changes."
+    },
+    {
+      "id": 28,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "What is the Bucket Pattern and when is it used?",
+      "answer": "Grouping multiple related readings/events (e.g., IoT sensor data) into a single document per time window instead of one doc per event -- reduces document count and index overhead for time-series-like data."
+    },
+    {
+      "id": 29,
+      "topic": "Schema Design",
+      "difficulty": "hard",
+      "question": "What is the Outlier Pattern?",
+      "answer": "Used when a small number of documents are extreme outliers (e.g. a viral post with millions of comments vs normal posts). Base doc has a flag like hasExtraData:true, and overflow is stored in a linked overflow document/collection -- keeps normal documents small while handling rare extreme cases separately."
+    },
+    {
+      "id": 30,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "What is the Subset Pattern?",
+      "answer": "Embed only a SUBSET of related data (e.g., the 10 most recent reviews) directly in the parent document for fast common-case reads, while the full related dataset lives in a separate collection for less frequent full-list/pagination access."
+    },
+    {
+      "id": 31,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "How do you model a many-to-many relationship, e.g. students and courses?",
+      "answer": "Either two-way referencing (array of courseIds in student doc + array of studentIds in course doc), or a separate junction/'enrollments' collection with studentId+courseId pairs -- junction collection scales better and avoids unbounded arrays."
+    },
+    {
+      "id": 32,
+      "topic": "Schema Design",
+      "difficulty": "hard",
+      "question": "What is schema versioning and why is it needed in MongoDB?",
+      "answer": "Since MongoDB is schema-less, documents can drift in shape as the app evolves. Storing a schemaVersion field lets application code detect and handle/migrate old-format documents gracefully instead of assuming a single fixed shape across all documents."
+    },
+    {
+      "id": 33,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "Why is denormalization more common in MongoDB schema design than in relational databases?",
+      "answer": "MongoDB is optimized for read performance and avoiding joins; duplicating data across documents (denormalization) trades some write complexity/storage for much faster, simpler reads -- the opposite tradeoff emphasis from normalized relational design."
+    },
+    {
+      "id": 34,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "What's a potential downside of heavy denormalization?",
+      "answer": "Data inconsistency risk -- if the same piece of information is duplicated across many documents, updating it requires updating every copy, and missing one leads to stale/inconsistent data across the system."
+    },
+    {
+      "id": 35,
+      "topic": "Schema Design",
+      "difficulty": "hard",
+      "question": "How would you model a product catalog where products have highly variable attributes (e.g., a shirt has size/color, a laptop has RAM/CPU)?",
+      "answer": "Use the Attribute Pattern: store variable attributes as an array of {key, value} pairs rather than fixed top-level fields, and create a single index on 'attributes.key' and 'attributes.value' -- avoids needing a huge number of sparse fields or a new index per possible attribute."
+    },
+    {
+      "id": 36,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "What is the Computed Pattern?",
+      "answer": "Precomputing and storing the RESULT of an expensive calculation (e.g., total views, average rating) directly on a document, updated incrementally on writes, instead of recalculating it from scratch on every read -- trades some write cost for much cheaper reads."
+    },
+    {
+      "id": 37,
+      "topic": "Schema Design",
+      "difficulty": "hard",
+      "question": "When migrating from a relational database to MongoDB, what's the biggest schema-design mindset shift?",
+      "answer": "Moving from 'normalize everything, avoid duplication' to 'design around your application's query patterns first' -- in MongoDB you often duplicate/embed data specifically to make your most common queries fast and join-free, rather than optimizing purely for storage normalization."
+    },
+    {
+      "id": 38,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "What is the Polymorphic Pattern?",
+      "answer": "Storing documents with different shapes/fields in the SAME collection when they share a common access pattern (e.g., different 'event' types in an events collection), often with a 'type' discriminator field so application code can branch on how to interpret each document."
+    },
+    {
+      "id": 39,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "Why might you choose one large collection with a discriminator field over several smaller collections?",
+      "answer": "If most queries need to access mixed types together (e.g., a unified activity feed mixing posts/comments/likes), one collection with a type field avoids running multiple queries and merging results in application code."
+    },
+    {
+      "id": 40,
+      "topic": "Schema Design",
+      "difficulty": "hard",
+      "question": "What is the Approximation Pattern?",
+      "answer": "Storing an approximate/cheaper-to-maintain value (e.g., an estimated view count updated only every N requests, or via probabilistic counting) instead of an exact real-time count, when perfect precision isn't required -- reduces write load significantly for high-frequency counters."
+    },
+    {
+      "id": 41,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "How do you handle a 'likes' feature (millions of users could like a single post) without embedding an unbounded array in the post document?",
+      "answer": "Store likes in a separate 'likes' collection with {postId, userId}, and maintain a denormalized likeCount on the post document (incremented via $inc) for fast display -- avoids the post document growing unboundedly."
+    },
+    {
+      "id": 42,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "What is referential integrity in MongoDB, and how is it different from a relational DB?",
+      "answer": "MongoDB does NOT enforce referential integrity automatically (no foreign key constraints) -- if you delete a customer, their referenced orders aren't automatically deleted or blocked. This must be handled at the application level or via a transaction if strict consistency is required."
+    },
+    {
+      "id": 43,
+      "topic": "Schema Design",
+      "difficulty": "hard",
+      "question": "What is the Tree/Ancestor Array pattern for modeling hierarchical data like categories?",
+      "answer": "Store an 'ancestors' array on each node containing all its parent IDs up the tree, enabling fast queries like 'find all descendants of X' or 'find the full path to root' via a single indexed array query, without recursive $graphLookup traversal."
+    },
+    {
+      "id": 44,
+      "topic": "Schema Design",
+      "difficulty": "medium",
+      "question": "Why is it usually a bad idea to use auto-incrementing integer _id values in a sharded MongoDB cluster?",
+      "answer": "Sequential IDs cause all new inserts to target the same shard/chunk at any given time (similar to the ObjectId hot-shard problem), creating a write bottleneck instead of distributing load evenly across shards."
+    },
+    {
+      "id": 45,
+      "topic": "Schema Design",
+      "difficulty": "hard",
+      "question": "How would you design a schema for an e-commerce cart that needs to survive server restarts and support guest (non-logged-in) users?",
+      "answer": "Store cart as its own document keyed by either userId (logged in) or a sessionId/guestId (guest), with a TTL index on guest carts to auto-expire abandoned ones, and a merge step to transfer session-cart items to the user-cart on login."
+    },
+    {
+      "id": 46,
+      "topic": "Aggregation",
+      "difficulty": "easy",
+      "question": "What does $match do and where should it typically be placed?",
+      "answer": "Filters documents based on a condition, similar to find(). Should be placed as early as possible in the pipeline so MongoDB can use indexes and reduce the working document set before expensive stages."
+    },
+    {
+      "id": 47,
+      "topic": "Aggregation",
+      "difficulty": "easy",
+      "question": "What's the difference between $group's _id field and a normal document's _id?",
+      "answer": "In $group, '_id' defines the GROUPING KEY expression (can be any field or computed expression, not necessarily unique per input document) -- it's repurposed as the group identifier, not the original document's unique identifier."
+    },
+    {
+      "id": 48,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What does $unwind do and what's the tradeoff of using it?",
+      "answer": "Deconstructs an array field into multiple documents, one per array element. Tradeoff: multiplies document count through the rest of the pipeline (e.g., orders with 5 items each turn into 5x documents), increasing memory/processing cost."
+    },
+    {
+      "id": 49,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "How can you compute a sum across array elements without $unwind?",
+      "answer": "Use $map to transform each array element into a computed value, then $sum to add them together -- all within a single document via $addFields, avoiding the document-count multiplication of $unwind."
+    },
+    {
+      "id": 50,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What does $facet do?",
+      "answer": "Runs multiple independent aggregation sub-pipelines on the same set of input documents within a single aggregate() call, returning results as separate named arrays -- avoids multiple round trips for things like 'results + total count' in one query."
+    },
+    {
+      "id": 51,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What is $bucket used for?",
+      "answer": "Groups documents into ranges/buckets you define (like a histogram), e.g. price ranges 0-50, 50-100, 100+ -- useful for distribution reports without manual bucketing logic in app code."
+    },
+    {
+      "id": 52,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What's the difference between $group and $bucket?",
+      "answer": "$group groups by an exact key/expression (SQL GROUP BY equivalent). $bucket groups into predefined ranges based on boundaries you specify -- a histogram-style grouping rather than exact-value grouping."
+    },
+    {
+      "id": 53,
+      "topic": "Aggregation",
+      "difficulty": "hard",
+      "question": "What does $lookup's 'let' + pipeline syntax allow that the simple localField/foreignField form doesn't?",
+      "answer": "It allows a full correlated sub-pipeline against the foreign collection -- filtering, computing fields, and re-filtering with variables from the outer document ($$varName) -- similar to a correlated SQL subquery, rather than just a direct equality match."
+    },
+    {
+      "id": 54,
+      "topic": "Aggregation",
+      "difficulty": "hard",
+      "question": "What does $graphLookup do and give a use case.",
+      "answer": "Performs recursive traversal within a collection following a connectFromField->connectToField chain until no more matches are found. Use case: finding an entire management hierarchy above/below an employee, or all descendant categories in a category tree."
+    },
+    {
+      "id": 55,
+      "topic": "Aggregation",
+      "difficulty": "hard",
+      "question": "What is $setWindowFields and what SQL concept does it mirror?",
+      "answer": "Mirrors SQL window functions (e.g., SUM() OVER PARTITION BY ... ORDER BY ...). Lets you compute running totals, rankings, or moving averages within partitions of your data without collapsing rows via $group -- introduced in MongoDB 5.0."
+    },
+    {
+      "id": 56,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What does allowDiskUse:true do and when is it needed?",
+      "answer": "Aggregation stages like $group/$sort default to a 100MB RAM limit. allowDiskUse:true permits spilling to disk when that limit is exceeded, letting large aggregations complete -- at the cost of slower performance due to disk I/O."
+    },
+    {
+      "id": 57,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What's the difference between $out and $merge?",
+      "answer": "$out completely REPLACES the target collection with the aggregation's output (destructive). $merge can insert, merge, or selectively update existing documents in the target collection based on whenMatched/whenNotMatched options -- more flexible, non-destructive by default."
+    },
+    {
+      "id": 58,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What does $replaceRoot (or $replaceWith) do?",
+      "answer": "Replaces the entire current document with a specified sub-document as the new top-level document -- useful after computing/joining a nested structure you want to promote as the final output shape."
+    },
+    {
+      "id": 59,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What does $filter do on an array field?",
+      "answer": "Returns a new array containing only the elements of the input array that satisfy a given condition -- lets you trim an array in-place without unwinding and regrouping the whole document."
+    },
+    {
+      "id": 60,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What does $switch do in aggregation expressions?",
+      "answer": "Evaluates a series of case/then branches top-to-bottom and returns the value of the first true case (with an optional default) -- the aggregation equivalent of an if/else-if chain, cleaner than nesting multiple $cond expressions."
+    },
+    {
+      "id": 61,
+      "topic": "Aggregation",
+      "difficulty": "hard",
+      "question": "Why might a pipeline with $match placed after $lookup and $unwind perform poorly, and how do you fix it?",
+      "answer": "MongoDB does the expensive join and unwind on ALL documents (including ones that will later be filtered out) before applying $match, and can't use an index on the matched field since $match isn't first. Fix: move $match before $lookup/$unwind wherever the filter doesn't depend on joined data."
+    },
+    {
+      "id": 62,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What does $sortByCount do?",
+      "answer": "Shorthand for grouping by an expression with a count, then sorting by count descending in one stage -- equivalent to {$group:{_id:expr,count:{$sum:1}}} + {$sort:{count:-1}}."
+    },
+    {
+      "id": 63,
+      "topic": "Aggregation",
+      "difficulty": "hard",
+      "question": "How would you compute a running total per customer ordered by date using $setWindowFields?",
+      "answer": "Use partitionBy:'$customerId', sortBy:{orderDate:1}, and output a $sum with window:{documents:['unbounded','current']} -- this sums all values from the start of each customer's partition up through the current row."
+    },
+    {
+      "id": 64,
+      "topic": "Aggregation",
+      "difficulty": "medium",
+      "question": "What's the purpose of $addFields vs $project when you just want to add one computed field?",
+      "answer": "$addFields adds/overwrites specific fields while KEEPING all other existing fields untouched. $project requires you to explicitly list every field you want to keep (or exclude) -- easier to accidentally drop fields with $project if you're just trying to add one new computed value."
+    },
+    {
+      "id": 65,
+      "topic": "Aggregation",
+      "difficulty": "hard",
+      "question": "Design a single pipeline: filter delivered orders from the last 90 days, compute order total, join customer tier, group revenue by tier, sort descending.",
+      "answer": "$match(status+date range) -> $addFields(orderTotal via $map/$sum) -> $lookup(customers) -> $unwind -> $group(_id:tier, revenue:$sum) -> $sort(revenue:-1). Tests correct STAGE ORDERING: filter first for index use, compute before join, join after filtering (avoid joining discarded docs), group, then sort."
+    },
+    {
+      "id": 66,
+      "topic": "Transactions",
+      "difficulty": "easy",
+      "question": "What are the requirements to use multi-document transactions in MongoDB?",
+      "answer": "Requires a replica set or sharded cluster (not a standalone/single-node deployment) -- transactions rely on the underlying replication/oplog mechanisms."
+    },
+    {
+      "id": 67,
+      "topic": "Transactions",
+      "difficulty": "medium",
+      "question": "What is the default timeout for a MongoDB transaction and why does it matter?",
+      "answer": "60 seconds by default. Long-running transactions hold locks/resources and increase the chance of conflicts with other operations -- best practice is to keep transactions short and fast."
+    },
+    {
+      "id": 68,
+      "topic": "Transactions",
+      "difficulty": "medium",
+      "question": "How would you achieve atomicity WITHOUT using a multi-document transaction?",
+      "answer": "Restructure the problem to use single-document atomic operators (e.g., $inc), since single-document writes in MongoDB are always atomic -- e.g., using an append-only ledger collection and computing balances via aggregation instead of updating two separate wallet documents transactionally."
+    },
+    {
+      "id": 69,
+      "topic": "Transactions",
+      "difficulty": "medium",
+      "question": "What is Optimistic Concurrency Control and how would you implement it manually in MongoDB?",
+      "answer": "Read a document including a 'version' field, then update using a filter that matches that specific version value; if no document matches (because someone else updated it first, bumping the version), the app detects the conflict and retries -- avoids needing locks for concurrent write conflict handling."
+    },
+    {
+      "id": 70,
+      "topic": "Transactions",
+      "difficulty": "hard",
+      "question": "What isolation level do MongoDB transactions provide, and how does it compare to SQL's serializable isolation?",
+      "answer": "MongoDB transactions provide snapshot isolation -- all reads within a transaction see a consistent snapshot as of the transaction start. It's similar to (but implementation-wise distinct from) SQL snapshot/serializable isolation levels, and write conflicts with concurrent transactions on the same documents cause one to abort and retry."
+    },
+    {
+      "id": 71,
+      "topic": "Transactions",
+      "difficulty": "medium",
+      "question": "Why are transactions generally discouraged in high-throughput hot-path queries in MongoDB?",
+      "answer": "They introduce locking/snapshot overhead and can reduce throughput significantly compared to single-document atomic writes -- best reserved for genuinely multi-document atomicity needs (e.g., financial transfers), not routine high-frequency operations."
+    },
+    {
+      "id": 72,
+      "topic": "Transactions",
+      "difficulty": "medium",
+      "question": "What does WriteConflict error mean and how should an application handle it?",
+      "answer": "It means another operation modified a document your transaction was also trying to modify, causing a conflict. The application should catch this error and retry the entire transaction (often with an exponential backoff), as MongoDB recommends transaction retry loops for this exact scenario."
+    },
+    {
+      "id": 73,
+      "topic": "Transactions",
+      "difficulty": "hard",
+      "question": "How do transactions behave differently in a sharded cluster vs a single replica set?",
+      "answer": "Sharded transactions spanning multiple shards involve a two-phase commit-like coordination across shards, adding more latency/overhead than a transaction confined to a single replica set -- performance cost increases further, reinforcing that transactions should be used sparingly and ideally scoped to a single shard when possible."
+    },
+    {
+      "id": 74,
+      "topic": "Transactions",
+      "difficulty": "medium",
+      "question": "What is a write concern and what does {w:'majority'} mean?",
+      "answer": "Write concern defines how many replica set members must acknowledge a write before it's confirmed successful to the client. {w:'majority'} requires acknowledgment from a majority of voting members -- safer/durable (survives primary failure) but slightly slower than {w:1} (primary only)."
+    },
+    {
+      "id": 75,
+      "topic": "Transactions",
+      "difficulty": "medium",
+      "question": "What is a read concern, and what does 'majority' read concern guarantee?",
+      "answer": "Read concern controls the consistency/isolation guarantees of a read operation. 'majority' read concern guarantees the data returned has been acknowledged by a majority of replica set members, meaning it won't be rolled back even if the primary fails shortly after."
+    },
+    {
+      "id": 76,
+      "topic": "Sharding",
+      "difficulty": "easy",
+      "question": "Why is a monotonically increasing shard key (like ObjectId or auto-increment int) a poor choice?",
+      "answer": "All new writes at any given time land on the same shard/chunk (since new IDs are always 'highest'), creating a write hot-spot and defeating the purpose of horizontal write scaling."
+    },
+    {
+      "id": 77,
+      "topic": "Sharding",
+      "difficulty": "medium",
+      "question": "What is a hashed shard key and what problem does it solve?",
+      "answer": "MongoDB hashes the shard key field's value to determine chunk placement, spreading writes evenly and randomly across shards regardless of the field's natural ordering -- solves the hot-shard problem of monotonic keys, at the cost of losing efficient range-query locality."
+    },
+    {
+      "id": 78,
+      "topic": "Sharding",
+      "difficulty": "medium",
+      "question": "What is a jumbo chunk and how does it occur?",
+      "answer": "A chunk that has grown too large to be split or migrated by the balancer, typically because too many documents share the same shard key value (e.g., one extremely active conversationId) -- causes an unbalanced, hot shard that can't be rebalanced normally."
+    },
+    {
+      "id": 79,
+      "topic": "Sharding",
+      "difficulty": "hard",
+      "question": "What's the tradeoff between choosing a low-cardinality vs high-cardinality shard key?",
+      "answer": "Low-cardinality (few distinct values) risks jumbo chunks and uneven distribution since many documents share few key values. High-cardinality (many distinct values, well distributed) spreads data/load evenly but if not chosen carefully (e.g., ignoring query patterns) can force scatter-gather queries across all shards instead of targeted ones."
+    },
+    {
+      "id": 80,
+      "topic": "Sharding",
+      "difficulty": "hard",
+      "question": "What is a scatter-gather query in a sharded cluster and when does it occur?",
+      "answer": "A query that must be sent to and executed on ALL shards (rather than being routed to a specific shard) because it doesn't include the shard key in its filter -- much slower than a targeted query, since results must be gathered and merged from every shard."
+    },
+    {
+      "id": 81,
+      "topic": "Sharding",
+      "difficulty": "medium",
+      "question": "What is the role of the mongos process in a sharded cluster?",
+      "answer": "mongos acts as a query router -- clients connect to mongos instead of directly to shards, and it routes each query/operation to the appropriate shard(s) based on the shard key and cluster metadata (stored in config servers)."
+    },
+    {
+      "id": 82,
+      "topic": "Sharding",
+      "difficulty": "medium",
+      "question": "What do config servers store in a sharded cluster?",
+      "answer": "Metadata about the cluster: which shards exist, the chunk-to-shard mapping, and the sharding configuration -- mongos consults config servers to know where to route each operation."
+    },
+    {
+      "id": 83,
+      "topic": "Replication",
+      "difficulty": "easy",
+      "question": "What is the role of the primary node in a MongoDB replica set?",
+      "answer": "The primary is the only node that accepts write operations. All writes go through it, and it replicates changes to secondary nodes via the oplog."
+    },
+    {
+      "id": 84,
+      "topic": "Replication",
+      "difficulty": "medium",
+      "question": "What is the oplog and how does replication use it?",
+      "answer": "The oplog (operations log) is a capped collection on the primary recording every write operation in order. Secondaries continuously tail/replay the oplog to stay in sync with the primary's data changes."
+    },
+    {
+      "id": 85,
+      "topic": "Replication",
+      "difficulty": "medium",
+      "question": "What happens during a replica set election, and when is one triggered?",
+      "answer": "Triggered when the primary becomes unreachable/steps down. Remaining eligible secondaries vote, and the one with the most up-to-date oplog (among other factors like priority) becomes the new primary -- requires a majority of voting members to agree for the election to succeed."
+    },
+    {
+      "id": 86,
+      "topic": "Replication",
+      "difficulty": "medium",
+      "question": "Difference between readPreference 'primary' and 'secondaryPreferred'?",
+      "answer": "'primary' always reads from the primary (strong consistency, latest writes visible). 'secondaryPreferred' prefers reading from secondaries (reduces load on primary but may return slightly stale data due to replication lag), falling back to primary if no secondary is available."
+    },
+    {
+      "id": 87,
+      "topic": "Replication",
+      "difficulty": "hard",
+      "question": "What is replication lag and why does it matter for application design?",
+      "answer": "The delay between a write being applied on the primary and being replicated to a secondary. If an app reads from a secondary immediately after writing (with a non-majority read preference), it might not see its own recent write -- a classic read-your-own-writes consistency pitfall."
+    },
+    {
+      "id": 88,
+      "topic": "Replication",
+      "difficulty": "medium",
+      "question": "What is an arbiter in a replica set?",
+      "answer": "A replica set member that participates in elections/voting but doesn't hold a copy of the data -- used to maintain an odd number of voters (avoiding split-vote scenarios) without the storage/resource cost of a full data-bearing node."
+    },
+    {
+      "id": 89,
+      "topic": "Replication",
+      "difficulty": "hard",
+      "question": "Why is having an even number of data-bearing voting members generally discouraged in a replica set?",
+      "answer": "It increases the risk of a tied vote during an election (no majority achievable), which can leave the replica set without a primary until the tie is resolved -- odd numbers (or an arbiter to break ties) avoid this scenario."
+    },
+    {
+      "id": 90,
+      "topic": "Sharding",
+      "difficulty": "hard",
+      "question": "When would you choose a compound shard key over a single-field shard key?",
+      "answer": "When a single field alone would have poor cardinality or create hot spots (e.g., conversationId alone), but combining it with another field (e.g., {conversationId:1, _id:1} or a hashed combination) improves distribution while still preserving some useful query locality for common access patterns."
+    },
+    {
+      "id": 91,
+      "topic": "Performance",
+      "difficulty": "easy",
+      "question": "What does .explain('executionStats') tell you that .explain('queryPlanner') doesn't?",
+      "answer": "'queryPlanner' shows the theoretical winning plan without running the query. 'executionStats' actually EXECUTES the query and returns real numbers -- docsExamined, keysExamined, nReturned, execution time -- to verify actual efficiency, not just the planned strategy."
+    },
+    {
+      "id": 92,
+      "topic": "Performance",
+      "difficulty": "medium",
+      "question": "What does a high 'totalDocsExamined' relative to 'nReturned' in explain() output indicate?",
+      "answer": "MongoDB is scanning far more documents than it's actually returning -- a sign of a missing or poorly-designed index, since an ideal index-supported query examines close to the same number of documents it returns."
+    },
+    {
+      "id": 93,
+      "topic": "Performance",
+      "difficulty": "medium",
+      "question": "What is the WiredTiger cache and why does its size matter for performance?",
+      "answer": "WiredTiger (MongoDB's default storage engine) keeps frequently accessed data and indexes in an in-memory cache. If the working set (data+indexes actively queried) doesn't fit in cache, MongoDB must read from disk more often, significantly slowing down queries -- cache sizing is a key production tuning consideration."
+    },
+    {
+      "id": 94,
+      "topic": "Performance",
+      "difficulty": "hard",
+      "question": "What is the difference between vertical and horizontal scaling in MongoDB, and when would you choose sharding over just adding more RAM/CPU?",
+      "answer": "Vertical scaling means upgrading a single server's resources (RAM/CPU/disk) -- simpler but has a hard ceiling and single point of failure. Horizontal scaling (sharding) distributes data across multiple servers -- chosen when data/throughput exceeds what a single powerful server can handle, or when you need to scale writes beyond one primary's capacity."
+    },
+    {
+      "id": 95,
+      "topic": "Performance",
+      "difficulty": "medium",
+      "question": "Why might using $where or heavy use of $regex without an anchor hurt performance?",
+      "answer": "$where executes arbitrary JavaScript per document (can't use indexes, very slow at scale). Unanchored $regex (no ^ prefix) can't use an index efficiently either since it must check the pattern against every possible position in the string -- both typically force a full collection scan."
+    },
+    {
+      "id": 96,
+      "topic": "Performance",
+      "difficulty": "medium",
+      "question": "What is connection pooling and why does it matter for a Node.js/backend app talking to MongoDB?",
+      "answer": "The MongoDB driver maintains a pool of reusable connections rather than opening a new TCP connection per request -- reduces connection overhead/latency and avoids exhausting server connection limits under high concurrent load."
+    },
+    {
+      "id": 97,
+      "topic": "Performance",
+      "difficulty": "hard",
+      "question": "How would you diagnose a slow query in production without an explain() plan readily available?",
+      "answer": "Enable and check the mongod slow query log (profiler), which logs operations exceeding a configurable threshold (e.g., 100ms) including their filter, duration, and docsExamined -- lets you find slow patterns retroactively across real production traffic, not just one query you run manually."
+    },
+    {
+      "id": 98,
+      "topic": "Performance",
+      "difficulty": "medium",
+      "question": "What's the risk of using an unindexed field in a $sort stage on a large collection?",
+      "answer": "MongoDB must load matching documents into memory and sort them there (in-memory sort), which is capped at 100MB by default and can throw an error or require allowDiskUse -- an indexed sort field instead lets MongoDB return pre-sorted results directly from the index with no extra sort step."
+    },
+    {
+      "id": 99,
+      "topic": "Performance",
+      "difficulty": "hard",
+      "question": "How does MongoDB's query planner decide which index to use when multiple candidate indexes exist?",
+      "answer": "It runs a brief 'trial period' executing multiple candidate plans in parallel on a small sample, and picks the plan that returns results fastest/most efficiently -- the winning plan is then cached (plan cache) for similar future queries until invalidated (e.g., by significant data changes or index changes)."
+    },
+    {
+      "id": 100,
+      "topic": "Performance",
+      "difficulty": "medium",
+      "question": "Why is it good practice to re-run explain() periodically on important queries even if performance seems fine today?",
+      "answer": "As data grows and its distribution changes (e.g., cardinality shifts, new patterns emerge), a previously efficient index/query plan can degrade -- what was fast at 100K documents may silently become a COLLSCAN-heavy bottleneck at 10M documents without code changes triggering it."
+    }
+  ]
+}
+        let currentTopic = 'all';
+        const reviewed = new Set();
+
+        // Curated topic palette, cycled for any topics beyond the named ones
+        const topicPalette = [
+            { tab: 'bg-emerald-500', ring: 'ring-emerald-200 dark:ring-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-400' },
+            { tab: 'bg-indigo-500',  ring: 'ring-indigo-200 dark:ring-indigo-900/40',  text: 'text-indigo-700 dark:text-indigo-400' },
+            { tab: 'bg-amber-500',   ring: 'ring-amber-200 dark:ring-amber-900/40',    text: 'text-amber-700 dark:text-amber-400' },
+            { tab: 'bg-violet-500',  ring: 'ring-violet-200 dark:ring-violet-900/40',  text: 'text-violet-700 dark:text-violet-400' },
+            { tab: 'bg-rose-500',    ring: 'ring-rose-200 dark:ring-rose-900/40',      text: 'text-rose-700 dark:text-rose-400' },
+            { tab: 'bg-cyan-500',    ring: 'ring-cyan-200 dark:ring-cyan-900/40',      text: 'text-cyan-700 dark:text-cyan-400' },
+            { tab: 'bg-orange-500',  ring: 'ring-orange-200 dark:ring-orange-900/40',  text: 'text-orange-700 dark:text-orange-400' },
+            { tab: 'bg-teal-500',    ring: 'ring-teal-200 dark:ring-teal-900/40',      text: 'text-teal-700 dark:text-teal-400' },
+        ];
+        const topicColorMap = {};
+        function colorForTopic(topic) {
+            if (!topicColorMap[topic]) {
+                const idx = Object.keys(topicColorMap).length % topicPalette.length;
+                topicColorMap[topic] = topicPalette[idx];
+            }
+            return topicColorMap[topic];
+        }
+
+        const diffDot = {
+            easy: 'bg-emerald-500',
+            medium: 'bg-amber-500',
+            hard: 'bg-rose-500'
+        };
+
+        // Initialize UI Elements
+        function init() {
+            document.getElementById('page-title').innerText = dataBank.title;
+            document.getElementById('page-level').innerText = `Target: ${dataBank.level}`;
+            document.getElementById('page-instructions').innerText = dataBank.instructions;
+            document.getElementById('stat-total').innerText = dataBank.questions.length;
+            document.getElementById('stat-topics').innerText = dataBank.topics_covered.length;
+
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').innerText = "☀️";
+            }
+
+            renderTopicTabs();
+            filterQuestions();
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.getElementById('theme-icon').innerText = isDark ? "☀️" : "🌙";
+        }
+
+        function renderTopicTabs() {
+            const container = document.getElementById('topic-filters');
+            dataBank.topics_covered.forEach(topic => {
+                colorForTopic(topic);
+                const btn = document.createElement('button');
+                btn.id = `tab-${topic.replace(/\s+/g, '-')}`;
+                btn.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-[#FFFDF9] dark:bg-[#151B1F] border border-[var(--paper-line)] dark:border-[#263038] text-slate-600 dark:text-slate-400 hover:brightness-95 dark:hover:brightness-125 shadow-xs transition-all cursor-pointer font-mono";
+                btn.innerText = topic;
+                btn.onclick = () => selectTopic(topic);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectTopic(topic) {
+            currentTopic = topic;
+
+            const allButtons = document.querySelectorAll('#topic-filters button');
+            allButtons.forEach(btn => {
+                btn.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-[#FFFDF9] dark:bg-[#151B1F] border border-[var(--paper-line)] dark:border-[#263038] text-slate-600 dark:text-slate-400 hover:brightness-95 dark:hover:brightness-125 shadow-xs transition-all cursor-pointer font-mono";
+            });
+
+            const activeId = topic === 'all' ? 'tab-all' : `tab-${topic.replace(/\s+/g, '-')}`;
+            document.getElementById(activeId).className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-[var(--ink)] dark:bg-emerald-600 text-white shadow-xs transition-all cursor-pointer font-mono";
+
+            filterQuestions();
+        }
+
+        function filterQuestions() {
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            const grid = document.getElementById('questions-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            const filtered = dataBank.questions.filter(q => {
+                const matchesTopic = (currentTopic === 'all' || q.topic === currentTopic);
+                const matchesSearch = q.question.toLowerCase().includes(searchQuery) || q.answer.toLowerCase().includes(searchQuery);
+                return matchesTopic && matchesSearch;
+            });
+
+            document.getElementById('stats-counter').innerText = `Showing ${filtered.length} of ${dataBank.questions.length} records`;
+            emptyState.classList.toggle('hidden', filtered.length !== 0);
+
+            filtered.forEach(q => {
+                const colors = colorForTopic(q.topic);
+                const card = document.createElement('div');
+                card.className = `catalog-card rounded-xl shadow-xs overflow-hidden flex flex-col justify-between transition-colors duration-200 relative pl-1.5`;
+
+                card.innerHTML = `
+                    <span class="absolute left-0 top-0 bottom-0 w-1.5 ${colors.tab}"></span>
+                    <div class="p-5 flex-1">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full ${diffDot[q.difficulty] || 'bg-slate-400'}"></span>
+                                <span class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">${q.difficulty}</span>
+                            </div>
+                            <span class="font-mono text-[10px] text-slate-300 dark:text-slate-600">No. ${String(q.id).padStart(3, '0')}</span>
+                        </div>
+                        <p class="font-mono text-[10px] uppercase tracking-widest ${colors.text} mb-1.5">${q.topic}</p>
+                        <h3 class="font-display text-base font-medium text-[var(--ink)] dark:text-white leading-snug">
+                            ${q.question}
+                        </h3>
+                    </div>
+
+                    <div class="px-5 pb-5 pt-0">
+                        <button onclick="toggleAnswer(${q.id})" class="text-xs font-semibold ${colors.text} hover:brightness-90 flex items-center gap-1.5 cursor-pointer select-none font-mono">
+                            <span id="eye-icon-${q.id}">▸</span> <span id="btn-text-${q.id}">reveal</span>
+                        </button>
+
+                        <div id="answer-box-${q.id}" class="hidden mt-4 terminal-box text-xs p-3.5 rounded-lg leading-relaxed whitespace-pre-line font-mono">
+<span class="text-slate-500">$</span> ${q.answer}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleAnswer(id) {
+            const target = document.getElementById(`answer-box-${id}`);
+            const text = document.getElementById(`btn-text-${id}`);
+            const icon = document.getElementById(`eye-icon-${id}`);
+
+            const isHidden = target.classList.contains('hidden') || target.style.display === 'none';
+
+            if (isHidden) {
+                target.classList.remove('hidden');
+                target.style.display = 'block';
+                target.classList.add('animate-unfold');
+                text.innerText = "hide";
+                icon.innerText = "▾";
+                if (!reviewed.has(id)) {
+                    reviewed.add(id);
+                    document.getElementById('stat-reviewed').innerText = reviewed.size;
+                }
+            } else {
+                target.style.display = 'none';
+                text.innerText = "reveal";
+                icon.innerText = "▸";
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
