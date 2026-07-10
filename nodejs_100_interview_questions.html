@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Node.js Interview Questions</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style type="text/tailwindcss">
+        @custom-variant dark (&:where(.dark, .dark *));
+
+        :root {
+            --paper: #FAF7F1;
+            --paper-line: #E7E0D3;
+            --ink: #2B2620;
+        }
+
+        * { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        body {
+            background-color: var(--paper);
+            background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
+            background-size: 100% 2.1rem;
+        }
+        .dark body {
+            background-color: #0F1417;
+            background-image: linear-gradient(#1C2226 1px, transparent 1px);
+            background-size: 100% 2.1rem;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbbfa3; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #3a4650; }
+        ::-webkit-scrollbar-thumb:hover { background: #b0a184; }
+
+        .catalog-hole {
+            width: 10px; height: 10px; border-radius: 9999px;
+            background: var(--paper);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+            border: 1px solid var(--paper-line);
+        }
+        .dark .catalog-hole { background: #0F1417; border-color: #2A3339; }
+
+        .catalog-card { background: #FFFDF9; border: 1px solid var(--paper-line); }
+        .dark .catalog-card { background: #151B1F; border-color: #263038; }
+
+        .terminal-box { background: #1B1F1C; color: #B9F6C4; }
+
+        @keyframes unfold {
+            from { opacity: 0; transform: translateY(-6px) scaleY(0.96); transform-origin: top; }
+            to { opacity: 1; transform: translateY(0) scaleY(1); transform-origin: top; }
+        }
+        .animate-unfold { animation: unfold 0.22s ease-out; }
+
+        @media (prefers-reduced-motion: reduce) { .animate-unfold { animation: none; } }
+
+        button:focus-visible, input:focus-visible { outline: 2px solid #6366f1; outline-offset: 2px; }
+    </style>
+</head>
+<body class="text-[var(--ink)] dark:text-slate-200 antialiased min-h-screen pb-16 transition-colors duration-200">
+
+    <header class="bg-[#FFFDF9]/90 dark:bg-[#10151A]/90 backdrop-blur-sm border-b border-[var(--paper-line)] dark:border-[#263038] sticky top-0 z-50 transition-colors duration-200">
+        <div class="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <p class="font-mono text-[11px] tracking-[0.2em] uppercase text-emerald-700 dark:text-emerald-400 mb-1">Interview Prep · Node.js</p>
+                <h1 id="page-title" class="font-display text-3xl font-semibold text-[var(--ink)] dark:text-white tracking-tight"></h1>
+                <p id="page-note" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+            </div>
+
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="relative flex-1 sm:w-64">
+                    <input type="text" id="search-input" oninput="filterQuestions()" placeholder="Search questions..."
+                        class="w-full pl-9 pr-4 py-2 text-sm bg-[var(--paper)] dark:bg-[#0F1417] border border-[var(--paper-line)] dark:border-[#263038] rounded-md text-[var(--ink)] dark:text-white focus:outline-hidden focus:border-emerald-600 transition-all font-mono">
+                    <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+                </div>
+                <button onclick="toggleTheme()" class="p-2 bg-[var(--paper)] dark:bg-[#0F1417] border border-[var(--paper-line)] dark:border-[#263038] rounded-md hover:brightness-95 dark:hover:brightness-125 transition-all cursor-pointer select-none" title="Toggle Theme" aria-label="Toggle light and dark theme">
+                    <span id="theme-icon" class="text-base">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 mt-8">
+        <div class="flex flex-col md:flex-row gap-4 md:items-stretch mb-8">
+            <div class="catalog-card rounded-xl px-5 py-4 flex-1 shadow-xs relative overflow-hidden">
+                <span class="absolute top-3 right-3 catalog-hole"></span>
+                <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Field Notes</p>
+                <p id="page-instructions" class="text-sm text-[var(--ink)] dark:text-slate-300 leading-relaxed"></p>
+            </div>
+            <div class="catalog-card rounded-xl px-5 py-4 flex items-center gap-6 shadow-xs">
+                <div>
+                    <p id="stat-total" class="font-display text-2xl font-semibold text-[var(--ink)] dark:text-white">0</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Questions</p>
+                </div>
+                <div class="w-px h-9 bg-[var(--paper-line)] dark:bg-[#263038]"></div>
+                <div>
+                    <p id="stat-topics" class="font-display text-2xl font-semibold text-[var(--ink)] dark:text-white">0</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Topics</p>
+                </div>
+                <div class="w-px h-9 bg-[var(--paper-line)] dark:bg-[#263038]"></div>
+                <div>
+                    <p id="stat-reviewed" class="font-display text-2xl font-semibold text-emerald-700 dark:text-emerald-400">0</p>
+                    <p class="font-mono text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500">Reviewed</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block mb-2">Browse by Topic</label>
+            <div id="topic-filters" class="flex flex-wrap gap-2">
+                <button onclick="selectTopic('all')" id="tab-all" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-[var(--ink)] dark:bg-emerald-600 text-white shadow-xs transition-all cursor-pointer font-mono">
+                    ALL
+                </button>
+            </div>
+        </div>
+
+        <div class="text-xs font-mono text-slate-400 dark:text-slate-500 mb-4" id="stats-counter">
+            Showing 0 records
+        </div>
+
+        <div id="questions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+        <div id="empty-state" class="hidden text-center py-16">
+            <p class="font-display text-xl text-slate-400 dark:text-slate-600 mb-1">No matching records</p>
+            <p class="text-sm text-slate-400 dark:text-slate-600 font-mono">try a different topic or search term</p>
+        </div>
+
+        <footer class="mt-16 pt-6 border-t border-[var(--paper-line)] dark:border-[#263038] text-center">
+            <p class="font-mono text-[11px] text-slate-400 dark:text-slate-600 tracking-wide">interview prep · node --version</p>
+        </footer>
+    </main>
+
+    <script>
+        // Your Master JSON Data
+        const dataBank = {
+  "title": "100 Node.js Interview Questions - Gujarat Company Style (2.5 YOE level)",
+  "note": "Simple, commonly-asked concept questions. Short answers - expand verbally in the interview.",
+  "questions": [
+    { "id": 1, "topic": "Node Core", "question": "What is Node.js?", "answer": "A JavaScript runtime built on Chrome's V8 engine that lets you run JS outside the browser, using an event-driven, non-blocking I/O model." },
+    { "id": 2, "topic": "Node Core", "question": "Is Node.js single-threaded or multi-threaded?", "answer": "The main event loop is single-threaded, but Node uses a libuv thread pool internally for heavy I/O (file system, DNS, crypto)." },
+    { "id": 3, "topic": "Node Core", "question": "What is the Event Loop?", "answer": "The mechanism that lets Node perform non-blocking I/O by offloading operations and processing callbacks in phases (timers, pending, poll, check, close)." },
+    { "id": 4, "topic": "Node Core", "question": "Difference between synchronous and asynchronous code in Node?", "answer": "Sync code blocks execution until it finishes; async code (callbacks/promises) lets Node continue other work and resume later via the event loop." },
+    { "id": 5, "topic": "Node Core", "question": "What is libuv?", "answer": "A C library Node uses for async I/O, providing the event loop and thread pool across platforms." },
+    { "id": 6, "topic": "Node Core", "question": "What is the difference between process.nextTick() and setImmediate()?", "answer": "process.nextTick() runs before the event loop continues (microtask-like, highest priority). setImmediate() runs in the check phase, after I/O callbacks." },
+    { "id": 7, "topic": "Node Core", "question": "What are Node.js global objects?", "answer": "Objects available everywhere without require, e.g. process, __dirname, __filename, module, exports, console, Buffer." },
+    { "id": 8, "topic": "Node Core", "question": "What is the purpose of the Buffer class?", "answer": "Buffer handles raw binary data directly in memory, used for things like file I/O and network streams before encoding conversion." },
+    { "id": 9, "topic": "Node Core", "question": "What is REPL in Node.js?", "answer": "Read-Eval-Print-Loop, an interactive shell to run JS commands one at a time and see immediate output." },
+    { "id": 10, "topic": "Node Core", "question": "How do you read command-line arguments in Node?", "answer": "Using process.argv, an array where index 0 is the node path, 1 is the script path, and 2+ are actual arguments." },
+    { "id": 11, "topic": "Modules", "question": "What is the difference between CommonJS and ES Modules?", "answer": "CommonJS uses require()/module.exports and is synchronous; ES Modules use import/export, are asynchronous, and support static analysis (tree-shaking)." },
+    { "id": 12, "topic": "Modules", "question": "What is module.exports vs exports?", "answer": "exports is a reference to module.exports; reassigning exports = {} breaks the link, but adding properties to exports.x works fine." },
+    { "id": 13, "topic": "Modules", "question": "How does require() caching work?", "answer": "Node caches modules by resolved file path after the first require, so subsequent requires return the same cached instance instead of re-executing the file." },
+    { "id": 14, "topic": "Modules", "question": "What is package.json used for?", "answer": "It defines project metadata, dependencies, scripts, and entry point for a Node.js project." },
+    { "id": 15, "topic": "Modules", "question": "Difference between dependencies and devDependencies?", "answer": "dependencies are needed at runtime in production; devDependencies are only needed during development (testing, build tools)." },
+    { "id": 16, "topic": "Modules", "question": "What does npm install --save vs --save-dev do?", "answer": "--save (default now) adds to dependencies; --save-dev adds to devDependencies." },
+    { "id": 17, "topic": "Modules", "question": "What is package-lock.json for?", "answer": "It locks exact dependency versions (including nested deps) so installs are reproducible across environments." },
+    { "id": 18, "topic": "Modules", "question": "What is npx?", "answer": "A tool to execute npm package binaries without globally installing them." },
+    { "id": 19, "topic": "Modules", "question": "How do you create a custom npm module?", "answer": "Create a package.json with main entry, write your exports, then npm publish or use npm link for local testing." },
+    { "id": 20, "topic": "Async", "question": "What is a callback function?", "answer": "A function passed as an argument to another function, executed after some operation completes, commonly used for async tasks." },
+    { "id": 21, "topic": "Async", "question": "What is callback hell and how do you avoid it?", "answer": "Deeply nested callbacks that become hard to read/maintain; avoided using Promises, async/await, or breaking logic into named functions." },
+    { "id": 22, "topic": "Async", "question": "What is a Promise?", "answer": "An object representing eventual completion or failure of an async operation, with states: pending, fulfilled, rejected." },
+    { "id": 23, "topic": "Async", "question": "What is async/await?", "answer": "Syntactic sugar over Promises that lets you write async code in a synchronous-looking style using try/catch for errors." },
+    { "id": 24, "topic": "Async", "question": "What happens if you forget to await a Promise?", "answer": "The code continues without waiting for it to resolve, potentially causing race conditions or unhandled promise rejections." },
+    { "id": 25, "topic": "Async", "question": "How do you run multiple async operations in parallel?", "answer": "Use Promise.all([...]) to run them concurrently and wait for all to resolve, rather than awaiting them one by one." },
+    { "id": 26, "topic": "Async", "question": "Difference between Promise.all and Promise.allSettled?", "answer": "Promise.all rejects immediately if any promise fails; Promise.allSettled waits for all and returns each result's status (fulfilled/rejected)." },
+    { "id": 27, "topic": "Async", "question": "Difference between Promise.race and Promise.any?", "answer": "Promise.race resolves/rejects with the first settled promise (success or failure); Promise.any resolves with the first successful one, ignoring failures unless all fail." },
+    { "id": 28, "topic": "Async", "question": "How do you handle errors in async/await code?", "answer": "Wrap the await calls in a try/catch block, or attach .catch() if using it as a Promise chain." },
+    { "id": 29, "topic": "Async", "question": "What is an unhandled promise rejection?", "answer": "When a Promise rejects and there's no .catch() or try/catch to handle it, which can crash the process in newer Node versions." },
+    { "id": 30, "topic": "Async", "question": "What is the difference between setTimeout and setInterval?", "answer": "setTimeout runs a function once after a delay; setInterval runs it repeatedly at fixed intervals until cleared." },
+    { "id": 31, "topic": "Express", "question": "What is Express.js?", "answer": "A minimal, flexible Node.js web framework for building APIs and web applications with routing and middleware support." },
+    { "id": 32, "topic": "Express", "question": "What is middleware in Express?", "answer": "A function with access to (req, res, next) that runs during the request-response cycle, used for logging, auth, parsing, etc." },
+    { "id": 33, "topic": "Express", "question": "What does next() do in middleware?", "answer": "It passes control to the next middleware/route handler in the stack; without calling it, the request hangs." },
+    { "id": 34, "topic": "Express", "question": "How do you handle errors globally in Express?", "answer": "Define an error-handling middleware with 4 arguments (err, req, res, next) placed after all routes." },
+    { "id": 35, "topic": "Express", "question": "What is the difference between app.use() and app.get()?", "answer": "app.use() mounts middleware for all HTTP methods on a path; app.get() only handles GET requests for a specific route." },
+    { "id": 36, "topic": "Express", "question": "How do you handle route parameters vs query parameters?", "answer": "Route params (req.params) come from the URL path like /users/:id; query params (req.query) come from the query string like ?page=2." },
+    { "id": 37, "topic": "Express", "question": "How do you validate incoming request data in Express?", "answer": "Using libraries like Joi, class-validator, or express-validator to validate/sanitize req.body, req.query, req.params before processing." },
+    { "id": 38, "topic": "Express", "question": "How do you serve static files in Express?", "answer": "Using express.static('folderName') middleware to serve assets like images, CSS, or JS files directly." },
+    { "id": 39, "topic": "Express", "question": "What is CORS and how do you enable it in Express?", "answer": "Cross-Origin Resource Sharing controls which domains can call your API; enabled using the cors npm package as middleware." },
+    { "id": 40, "topic": "Express", "question": "How do you structure a large Express application?", "answer": "Separate into routes, controllers, services, models, middleware, and config folders (MVC-like structure) for maintainability." },
+    { "id": 41, "topic": "REST API", "question": "What is REST?", "answer": "An architectural style for APIs using stateless HTTP requests and standard methods (GET, POST, PUT, DELETE) operating on resources." },
+    { "id": 42, "topic": "REST API", "question": "Difference between PUT and PATCH?", "answer": "PUT replaces the entire resource; PATCH partially updates only the specified fields." },
+    { "id": 43, "topic": "REST API", "question": "What is idempotency in REST APIs?", "answer": "An operation is idempotent if calling it multiple times has the same effect as calling it once (e.g. GET, PUT, DELETE are idempotent; POST is not)." },
+    { "id": 44, "topic": "REST API", "question": "What HTTP status code would you return for a successful POST creating a resource?", "answer": "201 Created, ideally with a Location header pointing to the new resource." },
+    { "id": 45, "topic": "REST API", "question": "Difference between 401 and 403 status codes?", "answer": "401 Unauthorized means the client isn't authenticated; 403 Forbidden means authenticated but not allowed to access that resource." },
+    { "id": 46, "topic": "REST API", "question": "What is pagination and why is it needed?", "answer": "Splitting large result sets into pages (using limit/offset or cursor-based) to reduce payload size and improve performance." },
+    { "id": 47, "topic": "REST API", "question": "What is API versioning and why do it?", "answer": "Adding a version (e.g. /api/v1/) so you can change/improve an API without breaking existing clients." },
+    { "id": 48, "topic": "REST API", "question": "What is the difference between REST and GraphQL?", "answer": "REST exposes fixed endpoints returning fixed data shapes; GraphQL exposes a single endpoint where clients query exactly the fields they need." },
+    { "id": 49, "topic": "REST API", "question": "How do you handle rate limiting in a Node API?", "answer": "Using middleware like express-rate-limit, often backed by Redis for distributed rate limiting across multiple server instances." },
+    { "id": 50, "topic": "REST API", "question": "What is HATEOAS?", "answer": "Hypermedia As The Engine Of Application State — a REST principle where responses include links to related actions/resources." },
+    { "id": 51, "topic": "Security", "question": "How do you securely store passwords in a database?", "answer": "Hash them with a slow algorithm like bcrypt (with salt), never store plaintext or use fast hashes like MD5/SHA1 alone." },
+    { "id": 52, "topic": "Security", "question": "What is JWT and how does it work?", "answer": "JSON Web Token is a signed token containing claims (payload); the server verifies its signature to trust the data without a DB lookup on every request." },
+    { "id": 53, "topic": "Security", "question": "Where should you store a JWT on the client side?", "answer": "HttpOnly secure cookies are safer against XSS than localStorage, though it depends on the app's CSRF protection strategy." },
+    { "id": 54, "topic": "Security", "question": "What is SQL Injection and how do you prevent it?", "answer": "An attack injecting malicious SQL through unsanitized input; prevented using parameterized queries/prepared statements or an ORM." },
+    { "id": 55, "topic": "Security", "question": "What is XSS (Cross-Site Scripting)?", "answer": "An attack where malicious scripts are injected into web pages viewed by other users; prevented by escaping/sanitizing user input in HTML output." },
+    { "id": 56, "topic": "Security", "question": "What is CSRF and how do you prevent it?", "answer": "Cross-Site Request Forgery tricks a logged-in user's browser into making unwanted requests; prevented using CSRF tokens or SameSite cookies." },
+    { "id": 57, "topic": "Security", "question": "What is Helmet.js used for?", "answer": "An Express middleware that sets secure HTTP headers (like X-Frame-Options, CSP) to protect against common web vulnerabilities." },
+    { "id": 58, "topic": "Security", "question": "How do you handle environment variables/secrets securely?", "answer": "Use a .env file with dotenv (never commit it), or a secrets manager (AWS Secrets Manager) in production; never hardcode keys." },
+    { "id": 59, "topic": "Security", "question": "What is OAuth 2.0?", "answer": "An authorization framework letting third-party apps get limited access to a user's resources without sharing their password." },
+    { "id": 60, "topic": "Security", "question": "How do you prevent NoSQL injection in MongoDB queries?", "answer": "Validate/sanitize input types (avoid passing raw objects into query filters) and use libraries like express-mongo-sanitize." },
+    { "id": 61, "topic": "Database", "question": "Difference between SQL and NoSQL databases?", "answer": "SQL (relational) uses structured tables with fixed schema and relationships; NoSQL (like MongoDB) uses flexible schema, often document/key-value based." },
+    { "id": 62, "topic": "Database", "question": "What is an ORM? Name a few used in Node.js.", "answer": "Object-Relational Mapping lets you interact with a DB using objects instead of raw SQL. Examples: Sequelize, TypeORM, Prisma." },
+    { "id": 63, "topic": "Database", "question": "What is indexing and why does it matter?", "answer": "An index is a data structure that speeds up lookups on specific columns/fields, at the cost of extra storage and slower writes." },
+    { "id": 64, "topic": "Database", "question": "What is a database transaction?", "answer": "A group of operations executed as a single atomic unit — either all succeed (commit) or all fail (rollback), ensuring data consistency." },
+    { "id": 65, "topic": "Database", "question": "What are ACID properties?", "answer": "Atomicity, Consistency, Isolation, Durability — properties that guarantee reliable database transactions." },
+    { "id": 66, "topic": "Database", "question": "What is connection pooling?", "answer": "Reusing a fixed set of open DB connections across requests instead of opening/closing a new connection each time, improving performance." },
+    { "id": 67, "topic": "Database", "question": "What is the N+1 query problem?", "answer": "When fetching a list and then making a separate query per item for related data, causing many unnecessary queries; solved with joins or eager loading." },
+    { "id": 68, "topic": "Database", "question": "What is database normalization?", "answer": "Organizing relational data to reduce redundancy by splitting into related tables, following normal forms (1NF, 2NF, 3NF)." },
+    { "id": 69, "topic": "Database", "question": "What is MongoDB aggregation used for?", "answer": "Processing data through a pipeline of stages ($match, $group, $project, etc.) to transform and compute results, similar to SQL GROUP BY/JOIN." },
+    { "id": 70, "topic": "Database", "question": "What is Redis commonly used for in Node apps?", "answer": "In-memory caching, session storage, rate limiting, and pub/sub messaging due to its speed." },
+    { "id": 71, "topic": "Testing/DevOps", "question": "What testing frameworks have you used with Node.js?", "answer": "Common ones: Jest, Mocha+Chai, Supertest for API/integration testing." },
+    { "id": 72, "topic": "Testing/DevOps", "question": "Difference between unit testing and integration testing?", "answer": "Unit tests check a single function/module in isolation (often with mocks); integration tests check multiple parts working together (e.g. API + DB)." },
+    { "id": 73, "topic": "Testing/DevOps", "question": "What is mocking in testing?", "answer": "Replacing a real dependency (DB call, external API) with a fake implementation so tests run predictably and fast without side effects." },
+    { "id": 74, "topic": "Testing/DevOps", "question": "What is CI/CD?", "answer": "Continuous Integration/Continuous Deployment — automating build, test, and deployment pipelines whenever code is pushed." },
+    { "id": 75, "topic": "Testing/DevOps", "question": "What is Docker and why use it?", "answer": "A containerization tool that packages an app with its dependencies into a portable image, ensuring consistent behavior across environments." },
+    { "id": 76, "topic": "Testing/DevOps", "question": "What is the difference between a Docker image and a container?", "answer": "An image is a read-only template/blueprint; a container is a running instance of that image." },
+    { "id": 77, "topic": "Testing/DevOps", "question": "What is PM2 used for?", "answer": "A process manager for Node.js apps that handles clustering, auto-restart on crash, and log management in production." },
+    { "id": 78, "topic": "Testing/DevOps", "question": "How do you handle logging in a production Node app?", "answer": "Use structured logging libraries (Winston, Pino) with log levels, and ship logs to a centralized system (CloudWatch, ELK) rather than console.log." },
+    { "id": 79, "topic": "Testing/DevOps", "question": "What is horizontal vs vertical scaling?", "answer": "Vertical scaling adds more resources (CPU/RAM) to one server; horizontal scaling adds more server instances and load-balances between them." },
+    { "id": 80, "topic": "Testing/DevOps", "question": "What is a load balancer?", "answer": "A component that distributes incoming traffic across multiple server instances to improve availability and performance." },
+    { "id": 81, "topic": "JS Fundamentals", "question": "Difference between var, let, and const?", "answer": "var is function-scoped and hoisted with undefined; let and const are block-scoped; const cannot be reassigned after declaration." },
+    { "id": 82, "topic": "JS Fundamentals", "question": "What is closures in JavaScript?", "answer": "A function that retains access to variables from its outer scope even after the outer function has returned." },
+    { "id": 83, "topic": "JS Fundamentals", "question": "What is 'this' keyword behavior in arrow functions vs regular functions?", "answer": "Arrow functions don't have their own 'this' — they inherit it from the enclosing lexical scope; regular functions get 'this' based on how they're called." },
+    { "id": 84, "topic": "JS Fundamentals", "question": "What is the difference between == and ===?", "answer": "== compares values with type coercion; === compares both value and type without coercion (strict equality)." },
+    { "id": 85, "topic": "JS Fundamentals", "question": "What is hoisting?", "answer": "JavaScript's behavior of moving variable/function declarations to the top of their scope during compilation, before code execution." },
+    { "id": 86, "topic": "JS Fundamentals", "question": "What is the difference between deep copy and shallow copy?", "answer": "Shallow copy duplicates only the top-level properties (nested objects still shared by reference); deep copy recursively duplicates everything." },
+    { "id": 87, "topic": "JS Fundamentals", "question": "What are Promises' 3 states?", "answer": "Pending (initial), Fulfilled (resolved successfully), Rejected (failed)." },
+    { "id": 88, "topic": "JS Fundamentals", "question": "What is destructuring in JS?", "answer": "A syntax to unpack values from arrays or properties from objects into distinct variables, e.g. const {name} = user." },
+    { "id": 89, "topic": "JS Fundamentals", "question": "What is the spread operator used for?", "answer": "Expanding an iterable (array/object) into individual elements, e.g. for copying, merging, or passing as function arguments." },
+    { "id": 90, "topic": "JS Fundamentals", "question": "What is the difference between null and undefined?", "answer": "undefined means a variable has been declared but not assigned a value; null is an intentional assignment representing 'no value'." },
+    { "id": 91, "topic": "TypeScript", "question": "Why use TypeScript over plain JavaScript?", "answer": "It adds static typing, catching errors at compile time, improving code readability, autocomplete, and refactoring safety." },
+    { "id": 92, "topic": "TypeScript", "question": "Difference between interface and type in TypeScript?", "answer": "Both define shapes of objects; interfaces support declaration merging and are more extendable, while type can represent unions, intersections, and primitives." },
+    { "id": 93, "topic": "TypeScript", "question": "What are generics in TypeScript?", "answer": "A way to write reusable, type-safe code that works with multiple types, e.g. function identity<T>(arg: T): T." },
+    { "id": 94, "topic": "TypeScript", "question": "What is the difference between any and unknown?", "answer": "any disables type checking completely; unknown is type-safe — you must narrow/check its type before using it." },
+    { "id": 95, "topic": "TypeScript", "question": "What are decorators in TypeScript (as used in NestJS)?", "answer": "Special functions prefixed with @ that add metadata or modify classes/methods/properties, heavily used in NestJS (e.g. @Controller, @Injectable)." },
+    { "id": 96, "topic": "NestJS", "question": "What is dependency injection in NestJS?", "answer": "A design pattern where NestJS's IoC container automatically creates and provides class dependencies (like services) instead of manually instantiating them." },
+    { "id": 97, "topic": "NestJS", "question": "What is a DTO in NestJS and why use it?", "answer": "Data Transfer Object — a class defining the shape of incoming/outgoing data, often combined with class-validator for request validation." },
+    { "id": 98, "topic": "NestJS", "question": "What is the difference between a Controller, Service, and Module in NestJS?", "answer": "Controller handles incoming requests/routing; Service contains business logic; Module groups related controllers/providers together." },
+    { "id": 99, "topic": "NestJS", "question": "What is a Pipe in NestJS?", "answer": "A class that transforms or validates input data before it reaches the route handler, e.g. ValidationPipe, ParseIntPipe." },
+    { "id": 100, "topic": "NestJS", "question": "What is an Interceptor in NestJS?", "answer": "A class that can transform the response, log execution time, or handle caching by wrapping around the route handler's execution using RxJS." }
+  ]
+}
+
+
+        let currentTopic = 'all';
+        const reviewed = new Set();
+
+        const topicPalette = [
+            { tab: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-400' },
+            { tab: 'bg-indigo-500',  text: 'text-indigo-700 dark:text-indigo-400' },
+            { tab: 'bg-amber-500',   text: 'text-amber-700 dark:text-amber-400' },
+            { tab: 'bg-violet-500',  text: 'text-violet-700 dark:text-violet-400' },
+            { tab: 'bg-rose-500',    text: 'text-rose-700 dark:text-rose-400' },
+            { tab: 'bg-cyan-500',    text: 'text-cyan-700 dark:text-cyan-400' },
+            { tab: 'bg-orange-500',  text: 'text-orange-700 dark:text-orange-400' },
+            { tab: 'bg-teal-500',    text: 'text-teal-700 dark:text-teal-400' },
+            { tab: 'bg-sky-500',     text: 'text-sky-700 dark:text-sky-400' },
+            { tab: 'bg-fuchsia-500', text: 'text-fuchsia-700 dark:text-fuchsia-400' },
+        ];
+        const topicColorMap = {};
+        function colorForTopic(topic) {
+            if (!topicColorMap[topic]) {
+                const idx = Object.keys(topicColorMap).length % topicPalette.length;
+                topicColorMap[topic] = topicPalette[idx];
+            }
+            return topicColorMap[topic];
+        }
+
+        // Derive the topic list directly from the questions, in first-seen order
+        function deriveTopics() {
+            const seen = [];
+            dataBank.questions.forEach(q => { if (!seen.includes(q.topic)) seen.push(q.topic); });
+            return seen;
+        }
+
+        function init() {
+            document.getElementById('page-title').innerText = dataBank.title;
+            document.getElementById('page-note').innerText = dataBank.note;
+            document.getElementById('page-instructions').innerText = dataBank.note;
+            document.getElementById('stat-total').innerText = dataBank.questions.length;
+            document.getElementById('stat-topics').innerText = deriveTopics().length;
+
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').innerText = "☀️";
+            }
+
+            renderTopicTabs();
+            filterQuestions();
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.getElementById('theme-icon').innerText = isDark ? "☀️" : "🌙";
+        }
+
+        function renderTopicTabs() {
+            const container = document.getElementById('topic-filters');
+            deriveTopics().forEach(topic => {
+                colorForTopic(topic);
+                const btn = document.createElement('button');
+                btn.id = `tab-${topic.replace(/\s+/g, '-')}`;
+                btn.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-[#FFFDF9] dark:bg-[#151B1F] border border-[var(--paper-line)] dark:border-[#263038] text-slate-600 dark:text-slate-400 hover:brightness-95 dark:hover:brightness-125 shadow-xs transition-all cursor-pointer font-mono";
+                btn.innerText = topic;
+                btn.onclick = () => selectTopic(topic);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectTopic(topic) {
+            currentTopic = topic;
+
+            const allButtons = document.querySelectorAll('#topic-filters button');
+            allButtons.forEach(btn => {
+                btn.className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-[#FFFDF9] dark:bg-[#151B1F] border border-[var(--paper-line)] dark:border-[#263038] text-slate-600 dark:text-slate-400 hover:brightness-95 dark:hover:brightness-125 shadow-xs transition-all cursor-pointer font-mono";
+            });
+
+            const activeId = topic === 'all' ? 'tab-all' : `tab-${topic.replace(/\s+/g, '-')}`;
+            document.getElementById(activeId).className = "px-3 py-1.5 text-xs font-semibold rounded-md bg-[var(--ink)] dark:bg-emerald-600 text-white shadow-xs transition-all cursor-pointer font-mono";
+
+            filterQuestions();
+        }
+
+        function filterQuestions() {
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            const grid = document.getElementById('questions-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            const filtered = dataBank.questions.filter(q => {
+                const matchesTopic = (currentTopic === 'all' || q.topic === currentTopic);
+                const matchesSearch = q.question.toLowerCase().includes(searchQuery) || q.answer.toLowerCase().includes(searchQuery);
+                return matchesTopic && matchesSearch;
+            });
+
+            document.getElementById('stats-counter').innerText = `Showing ${filtered.length} of ${dataBank.questions.length} records`;
+            emptyState.classList.toggle('hidden', filtered.length !== 0);
+
+            filtered.forEach(q => {
+                const colors = colorForTopic(q.topic);
+                const card = document.createElement('div');
+                card.className = `catalog-card rounded-xl shadow-xs overflow-hidden flex flex-col justify-between transition-colors duration-200 relative pl-1.5`;
+
+                card.innerHTML = `
+                    <span class="absolute left-0 top-0 bottom-0 w-1.5 ${colors.tab}"></span>
+                    <div class="p-5 flex-1">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-mono text-[10px] uppercase tracking-widest ${colors.text}">${q.topic}</span>
+                            <span class="font-mono text-[10px] text-slate-300 dark:text-slate-600">No. ${String(q.id).padStart(3, '0')}</span>
+                        </div>
+                        <h3 class="font-display text-base font-medium text-[var(--ink)] dark:text-white leading-snug">
+                            ${q.question}
+                        </h3>
+                    </div>
+
+                    <div class="px-5 pb-5 pt-0">
+                        <button onclick="toggleAnswer(${q.id})" class="text-xs font-semibold ${colors.text} hover:brightness-90 flex items-center gap-1.5 cursor-pointer select-none font-mono">
+                            <span id="eye-icon-${q.id}">▸</span> <span id="btn-text-${q.id}">reveal answer</span>
+                        </button>
+
+                        <div id="answer-box-${q.id}" class="hidden mt-4 terminal-box text-xs p-3.5 rounded-lg leading-relaxed whitespace-pre-line font-mono">
+<span class="text-slate-500">$</span> ${q.answer}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleAnswer(id) {
+            const target = document.getElementById(`answer-box-${id}`);
+            const text = document.getElementById(`btn-text-${id}`);
+            const icon = document.getElementById(`eye-icon-${id}`);
+
+            const isHidden = target.classList.contains('hidden') || target.style.display === 'none';
+
+            if (isHidden) {
+                target.classList.remove('hidden');
+                target.style.display = 'block';
+                target.classList.add('animate-unfold');
+                text.innerText = "hide";
+                icon.innerText = "▾";
+                if (!reviewed.has(id)) {
+                    reviewed.add(id);
+                    document.getElementById('stat-reviewed').innerText = reviewed.size;
+                }
+            } else {
+                target.style.display = 'none';
+                text.innerText = "reveal answer";
+                icon.innerText = "▸";
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
