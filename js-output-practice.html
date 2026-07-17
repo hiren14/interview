@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Output Trace — Interview Practice</title>
+<style>
+  :root{
+    --bg: #0b0e14;
+    --panel: #12161f;
+    --panel-2: #171c27;
+    --line: #232a38;
+    --text: #d8dee9;
+    --dim: #6b7686;
+    --accent: #c4f042;
+    --accent-dim: #7d8f3a;
+    --warn: #ff8a5c;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height:100vh;
+    padding: 20px 14px 60px;
+  }
+  .wrap{max-width:640px; margin:0 auto;}
+
+  header{margin-bottom:20px;}
+  .prompt{
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-dim);
+    letter-spacing: 0.5px;
+  }
+  .prompt::before{content:"$ "; color: var(--accent);}
+  h1{
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 6px;
+    letter-spacing: -0.3px;
+  }
+  .sub{color: var(--dim); font-size: 13px; margin-top: 4px;}
+
+  .stats{
+    display:flex; gap:10px; margin: 16px 0 14px;
+    font-family: var(--mono); font-size: 12px;
+  }
+  .stat{
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 8px 10px; flex:1; text-align:center;
+  }
+  .stat b{display:block; font-size:16px; color: var(--accent); font-weight:700;}
+  .stat span{color: var(--dim); font-size: 10px; text-transform:uppercase; letter-spacing:0.5px;}
+
+  .topics{
+    display:flex; flex-wrap:wrap; gap:6px; margin-bottom: 16px;
+  }
+  .topic-btn{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor:pointer;
+    white-space: nowrap;
+  }
+  .topic-btn.active{
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #1a2013;
+  }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .card-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel-2);
+  }
+  .tag{
+    font-family: var(--mono); font-size: 10px;
+    color: var(--accent-dim);
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .idx{font-family: var(--mono); font-size: 11px; color: var(--dim);}
+
+  .code{
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 14px;
+    white-space: pre;
+    overflow-x: auto;
+    color: #c9d1d9;
+  }
+  .code .kw{color:#ff7b9c;}
+  .code .fn{color:#79c0ff;}
+  .code .cm{color:#5c6470; font-style:italic;}
+  .code .st{color:#a5d6a7;}
+
+  .reveal-bar{
+    display:flex; gap:8px; padding: 0 14px 14px;
+  }
+  .btn{
+    flex:1;
+    background: transparent;
+    border: 1px solid var(--accent-dim);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn:active{background: #1a2013;}
+
+  .answer{
+    display:none;
+    padding: 0 14px 16px;
+    border-top: 1px dashed var(--line);
+    margin-top: 2px;
+  }
+  .answer.show{display:block;}
+  .out-label{
+    font-family: var(--mono); font-size: 10px; color: var(--dim);
+    text-transform:uppercase; letter-spacing:0.6px; margin: 12px 0 6px;
+  }
+  .out{
+    font-family: var(--mono);
+    font-size: 13px;
+    background: #0d1f0a;
+    border: 1px solid #24421c;
+    color: var(--accent);
+    padding: 10px 12px;
+    border-radius: 6px;
+    white-space: pre-wrap;
+  }
+  .why{
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+    margin-top: 10px;
+  }
+  .mark-row{
+    display:flex; gap:8px; margin-top:12px;
+  }
+  .mark{
+    flex:1; font-family: var(--mono); font-size:11px;
+    padding: 8px; border-radius: 6px; border:1px solid var(--line);
+    background: transparent; color: var(--dim); cursor:pointer;
+  }
+  .mark.got.active{ border-color: var(--accent); color: var(--accent); }
+  .mark.missed.active{ border-color: var(--warn); color: var(--warn); }
+
+  footer{
+    text-align:center; color: var(--dim); font-family: var(--mono);
+    font-size: 11px; margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="prompt">node practice.js --topic=all</div>
+    <h1>Predict the Output</h1>
+    <div class="sub">Core JS trace questions — the format your interviewer used</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b id="statTotal">0</b><span>Total</span></div>
+    <div class="stat"><b id="statGot">0</b><span>Got it</span></div>
+    <div class="stat"><b id="statMissed">0</b><span>Missed</span></div>
+  </div>
+
+  <div class="topics" id="topicBar"></div>
+  <div id="cardStack"></div>
+
+  <footer>swipe through, reveal, mark — repeat the missed ones before Monday</footer>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ---- ARRAYS ----
+  {topic:"Arrays", code:`console.log([1,2] + [3,4,5]);`, out:`"1,23,4,5"`, why:"The + operator has no array-specific meaning, so both arrays are coerced to strings first: [1,2] → \"1,2\" and [3,4,5] → \"3,4,5\". Then string concatenation happens: \"1,2\" + \"3,4,5\"."},
+  {topic:"Arrays", code:`const arrays = [[1,2],[3,4,5],[6,7],[8,9,10]];\nconsole.log(arrays.flat());`, out:`[1,2,3,4,5,6,7,8,9,10]`, why:".flat() merges one level of nested arrays into the parent array, preserving order."},
+  {topic:"Arrays", code:`const arr = [1,2,3];\narr.length = 0;\nconsole.log(arr);`, out:`[]`, why:"Setting .length directly truncates (or clears) the array in place — it's a valid way to empty an array without creating a new one."},
+  {topic:"Arrays", code:`console.log([1,2,3].map(String));`, out:`['1', '2', '3']`, why:"map passes (element, index, array) to the callback. String() only uses the first arg so this works cleanly, but a common gotcha is using parseInt this way (see the parseInt trap)."},
+  {topic:"Arrays", code:`console.log(['1','2','3'].map(parseInt));`, out:`[1, NaN, NaN]`, why:"map calls parseInt(element, index, array) — so index becomes the radix! parseInt('1',0)=1, parseInt('2',1)=NaN (invalid radix), parseInt('3',2)=NaN ('3' isn't valid in base 2)."},
+  {topic:"Arrays", code:`const a = [1,2,3];\nconst b = a;\nb.push(4);\nconsole.log(a);`, out:`[1, 2, 3, 4]`, why:"Arrays are reference types. b isn't a copy — it points to the same array in memory, so mutating b also affects a."},
+  {topic:"Arrays", code:`console.log([1,2,3].sort());\nconsole.log([10,2,33,4].sort());`, out:`[1, 2, 3]\n[10, 2, 33, 4]`, why:"Default sort() converts elements to strings and compares lexicographically. '10' < '2' < '33' < '4' alphabetically — a classic interview trap."},
+  {topic:"Arrays", code:`const arr = [1,,3];\nconsole.log(arr.length);\nconsole.log(arr[1]);`, out:`3\nundefined`, why:"This creates a 'sparse array' with a hole at index 1. length still counts it, but accessing it returns undefined (the slot is empty, not explicitly set)."},
+  {topic:"Arrays", code:`console.log(Array(3));\nconsole.log(Array(3).fill(0));`, out:`[ <3 empty items> ]\n[0, 0, 0]`, why:"Array(3) creates a sparse array with no actual elements — map/forEach skip empty slots. .fill() actually assigns values to every index."},
+  {topic:"Arrays", code:`console.log(typeof [1,2,3]);`, out:`"object"`, why:"Arrays are a specialized kind of object in JS — use Array.isArray() to actually distinguish them from plain objects."},
+
+  // ---- OBJECTS / REFERENCES ----
+  {topic:"Objects", code:`const a = { x: 1 };\nconst b = a;\nb.x = 2;\nconsole.log(a.x);`, out:`2`, why:"Objects are assigned by reference. a and b point to the same object in memory, so mutating through b changes what a sees too."},
+  {topic:"Objects", code:`const a = { x: 1 };\nconst b = { ...a };\nb.x = 2;\nconsole.log(a.x);`, out:`1`, why:"Spread creates a shallow copy — a new object with copied top-level properties. Now b is independent, so mutating it doesn't touch a."},
+  {topic:"Objects", code:`console.log({} == {});\nconsole.log({} === {});`, out:`false\nfalse`, why:"Object comparison checks reference identity, not structural equality. Two separately created objects are never === or == even if they look identical."},
+  {topic:"Objects", code:`const obj = { a: 1, b: 2, a: 3 };\nconsole.log(obj);`, out:`{ a: 3, b: 2 }`, why:"Duplicate keys in an object literal aren't an error — the last one wins, silently overwriting earlier duplicates."},
+  {topic:"Objects", code:`const obj = { name: "A" };\nconst { name, age = 25 } = obj;\nconsole.log(age);`, out:`25`, why:"Destructuring default values only kick in when the property is undefined (missing here), not for null or other falsy values."},
+  {topic:"Objects", code:`function change(o) { o.val = 99; o = { val: 1 }; }\nconst obj = { val: 0 };\nchange(obj);\nconsole.log(obj.val);`, out:`99`, why:"The object reference is passed by value — mutating the object it points to affects the caller, but reassigning the local parameter to a new object doesn't."},
+  {topic:"Objects", code:`console.log(Object.keys({a:1,b:2,1:'x',0:'y'}));`, out:`['0', '1', 'a', 'b']`, why:"Integer-like keys are always iterated first, in ascending numeric order, before string keys in insertion order."},
+  {topic:"Objects", code:`const obj = {};\nobj[true] = "yes";\nobj[1] = "one";\nconsole.log(obj);`, out:`{ '1': 'one', 'true': 'yes' }`, why:"Object keys are coerced to strings. true becomes 'true', and 1 becomes '1' — they don't collide since the string forms differ."},
+  {topic:"Objects", code:`console.log(typeof null);`, out:`"object"`, why:"A famous long-standing JS bug preserved for backward compatibility — null is a primitive, but typeof reports 'object'."},
+  {topic:"Objects", code:`const a = { val: 1 };\nObject.freeze(a);\na.val = 2;\nconsole.log(a.val);`, out:`1`, why:"Object.freeze prevents modification of existing properties. The assignment fails silently in non-strict mode instead of throwing."},
+
+  // ---- LOOPS: for...of / for...in ----
+  {topic:"Loops", code:`const arr = ['a','b','c'];\nfor (const i in arr) console.log(i);`, out:`"0"\n"1"\n"2"`, why:"for...in iterates over enumerable keys (as strings) — for arrays that means indices, not values."},
+  {topic:"Loops", code:`const arr = ['a','b','c'];\nfor (const i of arr) console.log(i);`, out:`"a"\n"b"\n"c"`, why:"for...of iterates over the values yielded by the iterable's iterator — for arrays that's the actual elements."},
+  {topic:"Loops", code:`for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}`, out:`3\n3\n3`, why:"var is function-scoped, so all three callbacks close over the same i. By the time the timeouts fire, the loop has finished and i is 3."},
+  {topic:"Loops", code:`for (let i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}`, out:`0\n1\n2`, why:"let is block-scoped — each iteration gets a fresh binding of i, so each closure captures its own value."},
+  {topic:"Loops", code:`const obj = { a: 1, b: 2 };\nfor (const key of obj) console.log(key);`, out:`TypeError: obj is not iterable`, why:"Plain objects don't implement the iterator protocol, so for...of throws. Use Object.keys/values/entries with for...of instead, or for...in directly on the object."},
+  {topic:"Loops", code:`console.log([1,2,3].map((n) => n * 2).filter((n) => n > 2));`, out:`[4, 6]`, why:"map doubles each value to [2,4,6], then filter keeps only values greater than 2, leaving [4,6]."},
+
+  // ---- CLOSURES & SCOPE ----
+  {topic:"Closures", code:`function counter() {\n  let count = 0;\n  return () => ++count;\n}\nconst c = counter();\nconsole.log(c());\nconsole.log(c());`, out:`1\n2`, why:"Each call to counter() creates a new count variable that the returned function closes over. The count persists between calls to c() because it's the same closure."},
+  {topic:"Closures", code:`console.log(a);\nvar a = 5;`, out:`undefined`, why:"var declarations are hoisted to the top of their scope (but not their assignment) — so a exists as undefined at the console.log line, not an error."},
+  {topic:"Closures", code:`console.log(a);\nlet a = 5;`, out:`ReferenceError: Cannot access 'a' before initialization`, why:"let/const are hoisted too, but land in the 'temporal dead zone' — accessing them before the declaration line throws, unlike var."},
+  {topic:"Closures", code:`function outer() {\n  var x = 10;\n  function inner() { console.log(x); }\n  return inner;\n}\nconst fn = outer();\nfn();`, out:`10`, why:"inner() closes over x even after outer() has finished executing — the closure keeps x alive in memory."},
+  {topic:"Closures", code:`function foo() {\n  console.log(this);\n}\nfoo();`, out:`undefined (strict mode) or the global object (non-strict)`, why:"Regular function calls without an explicit receiver default this to the global object in sloppy mode, or undefined in strict mode / modules."},
+  {topic:"Closures", code:`const obj = {\n  name: "A",\n  greet: function() { setTimeout(function() { console.log(this.name); }, 0); }\n};\nobj.greet();`, out:`undefined`, why:"A regular function passed to setTimeout loses the object context — 'this' inside it refers to the global object (or undefined in strict mode), not obj."},
+  {topic:"Closures", code:`const obj = {\n  name: "A",\n  greet: function() { setTimeout(() => console.log(this.name), 0); }\n};\nobj.greet();`, out:`"A"`, why:"Arrow functions don't have their own 'this' — they inherit it lexically from greet's scope, where this is obj."},
+
+  // ---- ASYNC / EVENT LOOP ----
+  {topic:"Async", code:`console.log(1);\nsetTimeout(() => console.log(2), 0);\nconsole.log(3);`, out:`1\n3\n2`, why:"setTimeout callbacks always run after the current synchronous code finishes, even with a 0ms delay — they're queued as macrotasks."},
+  {topic:"Async", code:`console.log(1);\nPromise.resolve().then(() => console.log(2));\nconsole.log(3);`, out:`1\n3\n2`, why:"Promise .then callbacks are microtasks, which run after the current synchronous code but before the next macrotask (like setTimeout)."},
+  {topic:"Async", code:`console.log(1);\nsetTimeout(() => console.log(2), 0);\nPromise.resolve().then(() => console.log(3));\nconsole.log(4);`, out:`1\n4\n3\n2`, why:"Sync code runs first (1, 4). Then the microtask queue drains fully (3) before the macrotask queue is checked (2) — microtasks always win the race."},
+  {topic:"Async", code:`async function f() {\n  console.log(1);\n  await null;\n  console.log(2);\n}\nf();\nconsole.log(3);`, out:`1\n3\n2`, why:"Code before the first await runs synchronously. await always yields control back to the caller, so 'console.log(3)' runs before the resumed 'console.log(2)'."},
+  {topic:"Async", code:`Promise.resolve(1)\n  .then((v) => { throw new Error("fail"); })\n  .catch((e) => console.log("caught: " + e.message))\n  .then((v) => console.log("after: " + v));`, out:`caught: fail\nafter: undefined`, why:"catch() handles the thrown error and its return value (undefined, since nothing was returned) becomes the resolved value for the next .then()."},
+  {topic:"Async", code:`async function f() { return 1; }\nf().then(console.log);`, out:`1`, why:"Async functions always return a Promise. Returning a plain value auto-wraps it in Promise.resolve(1), so .then() receives 1."},
+
+  // ---- TYPE COERCION ----
+  {topic:"Coercion", code:`console.log(1 + "1");\nconsole.log(1 - "1");`, out:`"11"\n0`, why:"+ with a string operand triggers string concatenation. - has no string meaning, so it coerces both sides to numbers instead."},
+  {topic:"Coercion", code:`console.log("5" == 5);\nconsole.log("5" === 5);`, out:`true\nfalse`, why:"== allows type coercion before comparing (the string is converted to a number). === requires matching types, so it's false."},
+  {topic:"Coercion", code:`console.log(null == undefined);\nconsole.log(null === undefined);`, out:`true\nfalse`, why:"null and undefined are loosely equal to each other by spec as a special case, but strictly they're different types."},
+  {topic:"Coercion", code:`console.log(0 == "0");\nconsole.log(0 == "");\nconsole.log(0 == []);`, out:`true\ntrue\ntrue`, why:"All get coerced to numbers for ==: '0'→0, ''→0, and []→''→0 through array-to-primitive conversion. This chain of coercions is a classic gotcha."},
+  {topic:"Coercion", code:`console.log([] + []);\nconsole.log([] + {});\nconsole.log({} + []);`, out:`""\n"[object Object]"\n"[object Object]" (or 0 if {} is parsed as a block in some contexts)`, why:"+ coerces both operands to strings. Empty array becomes '', so ''+''=''. Array + object becomes '' + '[object Object]'. The {} + [] case can behave differently depending on whether {} is parsed as an object literal or a block statement."},
+  {topic:"Coercion", code:`console.log(NaN === NaN);\nconsole.log(Object.is(NaN, NaN));`, out:`false\ntrue`, why:"NaN is defined to never equal itself under ==/===, by spec. Object.is fixes this edge case and correctly reports NaN as identical to NaN."},
+  {topic:"Coercion", code:`console.log(!!"");\nconsole.log(!!"0");\nconsole.log(!!0);\nconsole.log(!![]);`, out:`false\ntrue\nfalse\ntrue`, why:"Only these are falsy: '', 0, -0, null, undefined, NaN, false. Non-empty strings (even '0') and all objects/arrays are truthy, regardless of contents."},
+
+  // ---- FUNCTIONS / this / prototypes ----
+  {topic:"Functions", code:`function Person(name) { this.name = name; }\nconst p = Person("Alice");\nconsole.log(p);\nconsole.log(name);`, out:`undefined\n"Alice"`, why:"Calling Person without 'new' means 'this' refers to the global object, so name leaks there. The function returns nothing, so p is undefined."},
+  {topic:"Functions", code:`function Person(name) { this.name = name; }\nconst p = new Person("Alice");\nconsole.log(p.name);`, out:`"Alice"`, why:"'new' creates a fresh object, binds 'this' to it, and returns it automatically — the standard constructor pattern."},
+  {topic:"Functions", code:`const obj = {\n  value: 42,\n  getValue: function() { return this.value; }\n};\nconst fn = obj.getValue;\nconsole.log(fn());`, out:`undefined (or TypeError in strict mode reading value)`, why:"Detaching the method loses its receiver — calling fn() plainly sets 'this' to the global object/undefined, which has no 'value' property."},
+  {topic:"Functions", code:`function greet() { return this.name; }\nconst boundGreet = greet.bind({ name: "Bob" });\nconsole.log(boundGreet());`, out:`"Bob"`, why:"bind() permanently locks 'this' to the given object, no matter how the returned function is later called."},
+  {topic:"Functions", code:`console.log([1, [2, 3], [4, [5, 6]]].flat(Infinity));`, out:`[1, 2, 3, 4, 5, 6]`, why:"Passing Infinity as the depth to flat() fully flattens arbitrarily nested arrays, regardless of how deep the nesting goes."},
+  {topic:"Functions", code:`function outer() {\n  return function inner() {\n    return arguments[0];\n  }\n}\nconsole.log(outer(1)(2));`, out:`2`, why:"'arguments' is specific to the nearest enclosing regular function — inner's own arguments object holds what was passed to inner(2), not outer(1)."},
+
+  // ---- STRINGS / MISC ----
+  {topic:"Misc", code:`console.log(typeof function(){});\nconsole.log(typeof class{});`, out:`"function"\n"function"`, why:"Classes are syntactic sugar over functions/constructors under the hood, so typeof still reports 'function'."},
+  {topic:"Misc", code:`console.log(0.1 + 0.2 === 0.3);`, out:`false`, why:"Floating-point numbers can't represent 0.1 and 0.2 exactly in binary, so their sum is 0.30000000000000004, not exactly 0.3."},
+  {topic:"Misc", code:`console.log([1,2,3] instanceof Array);\nconsole.log([1,2,3] instanceof Object);`, out:`true\ntrue`, why:"Arrays are objects too — instanceof checks the entire prototype chain, and Array.prototype's own prototype is Object.prototype."},
+  {topic:"Misc", code:`let x = 10;\n{\n  let x = 20;\n  console.log(x);\n}\nconsole.log(x);`, out:`20\n10`, why:"Block scoping with let means the inner x shadows the outer one only within its own {} block — the outer x is untouched."},
+
+  // ---- SLICE / SPLICE / INDEXING ----
+  {topic:"Slice/Index", code:`const arr = [1,2,3,4,5];\nconsole.log(arr.slice(1,3));\nconsole.log(arr);`, out:`[2, 3]\n[1, 2, 3, 4, 5]`, why:"slice() returns a shallow copy of a portion (start inclusive, end exclusive) without touching the original array at all."},
+  {topic:"Slice/Index", code:`const arr = [1,2,3,4,5];\nconsole.log(arr.splice(1,2));\nconsole.log(arr);`, out:`[2, 3]\n[1, 4, 5]`, why:"splice() mutates the original array in place, removing (and optionally inserting) elements, and returns the removed items. This is the key difference from slice()."},
+  {topic:"Slice/Index", code:`const arr = [1,2,3,4,5];\nconsole.log(arr.slice(-2));`, out:`[4, 5]`, why:"A negative index in slice() counts backward from the end of the array — -2 means 'start 2 from the end'."},
+  {topic:"Slice/Index", code:`console.log("hello".slice(1,3));\nconsole.log("hello".substring(1,3));`, out:`"el"\n"el"`, why:"For simple positive ranges slice and substring behave the same, but they diverge on negative or swapped arguments — substring clamps negatives to 0 and swaps reversed args, slice doesn't."},
+  {topic:"Slice/Index", code:`const arr = [1,2,3];\nconsole.log(arr.indexOf(4));\nconsole.log(arr[10]);`, out:`-1\nundefined`, why:"indexOf returns -1 (not an error) when the value isn't found. Accessing an out-of-bounds index also quietly returns undefined instead of throwing."},
+  {topic:"Slice/Index", code:`const arr = [1,2,NaN,4];\nconsole.log(arr.indexOf(NaN));\nconsole.log(arr.includes(NaN));`, out:`-1\ntrue`, why:"indexOf uses strict equality (===) internally, and NaN === NaN is false, so it never finds it. includes() uses the SameValueZero algorithm instead, which does treat NaN as findable."},
+  {topic:"Slice/Index", code:`const str = "hello";\nconsole.log(str[10]);\nconsole.log(str.charAt(10));`, out:`undefined\n""`, why:"Bracket access past the string's length returns undefined, but the older charAt() method returns an empty string instead — a subtle API inconsistency worth knowing."},
+  {topic:"Slice/Index", code:`const arr = ["a","b","c"];\narr.splice(1, 0, "x");\nconsole.log(arr);`, out:`['a', 'x', 'b', 'c']`, why:"A splice() call with a deleteCount of 0 doesn't remove anything — it only inserts the new item(s) at that index, shifting the rest right."},
+
+  // ---- SHALLOW VS DEEP COPY ----
+  {topic:"Copying", code:`const a = { x: 1, nested: { y: 2 } };\nconst b = { ...a };\nb.nested.y = 99;\nconsole.log(a.nested.y);`, out:`99`, why:"Spread only copies one level deep. Top-level 'nested' is still a reference to the same inner object, so mutating it through b leaks back into a — this is the core shallow-copy trap."},
+  {topic:"Copying", code:`const a = { x: 1, nested: { y: 2 } };\nconst b = JSON.parse(JSON.stringify(a));\nb.nested.y = 99;\nconsole.log(a.nested.y);`, out:`2`, why:"Serializing to JSON and back creates a fully independent deep copy with no shared references — but it silently drops functions, undefined, Dates (become strings), and Symbols."},
+  {topic:"Copying", code:`const a = { x: 1, nested: { y: 2 } };\nconst b = structuredClone(a);\nb.nested.y = 99;\nconsole.log(a.nested.y);`, out:`2`, why:"structuredClone() is the modern built-in deep clone — it handles nested objects, Dates, Maps, and Sets correctly, unlike the JSON.parse/stringify trick."},
+  {topic:"Copying", code:`const arr = [{ id: 1 }, { id: 2 }];\nconst copy = [...arr];\ncopy[0].id = 99;\nconsole.log(arr[0].id);`, out:`99`, why:"Spreading an array only copies the top-level array structure — the objects inside are still shared references, so mutating an element mutates the original too."},
+  {topic:"Copying", code:`const a = { x: 1 };\nconst b = Object.assign({}, a);\nb.x = 2;\nconsole.log(a.x);`, out:`1`, why:"Object.assign copies own enumerable properties into a new target object, same shallow-copy behavior as spread — top-level primitives are safely copied, but nested objects would still be shared."},
+  {topic:"Copying", code:`function deepEqual(a, b) { return JSON.stringify(a) === JSON.stringify(b); }\nconsole.log(deepEqual({a:1,b:2}, {b:2,a:1}));`, out:`false`, why:"JSON.stringify preserves key order, so two objects with the same properties in different insertion order produce different strings — a common false negative when people 'cheat' deep-equality this way."},
+];
+
+let userState = QUESTIONS.map(() => ({ revealed:false, mark:null }));
+let activeTopic = "All";
+
+function getTopics(){
+  return ["All", ...new Set(QUESTIONS.map(q => q.topic))];
+}
+
+function highlight(code){
+  return code
+    .replace(/\b(function|const|let|var|return|if|else|for|of|in|new|this|typeof|instanceof|async|await|throw|class)\b/g, '<span class="kw">$1</span>')
+    .replace(/\b(console\.log|setTimeout|Promise\.resolve|Object\.\w+|Array\.\w+|parseInt|map|filter|flat|fill|sort|push|bind)\b/g, '<span class="fn">$1</span>')
+    .replace(/(".*?"|'.*?')/g, '<span class="st">$1</span>')
+    .replace(/(\/\/.*$)/gm, '<span class="cm">$1</span>');
+}
+
+function render(){
+  const bar = document.getElementById('topicBar');
+  bar.innerHTML = '';
+  getTopics().forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'topic-btn' + (t === activeTopic ? ' active' : '');
+    b.textContent = t;
+    b.onclick = () => { activeTopic = t; render(); };
+    bar.appendChild(b);
+  });
+
+  const stack = document.getElementById('cardStack');
+  stack.innerHTML = '';
+  QUESTIONS.forEach((q, idx) => {
+    if (activeTopic !== "All" && q.topic !== activeTopic) return;
+    const state = userState[idx];
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-head">
+        <span class="tag">${q.topic}</span>
+        <span class="idx">#${idx + 1}</span>
+      </div>
+      <div class="code">${highlight(q.code)}</div>
+      <div class="reveal-bar">
+        <button class="btn" data-idx="${idx}">${state.revealed ? 'hide output' : 'reveal output'}</button>
+      </div>
+      <div class="answer ${state.revealed ? 'show' : ''}" id="answer-${idx}">
+        <div class="out-label">Output</div>
+        <div class="out">${q.out}</div>
+        <div class="why">${q.why}</div>
+        <div class="mark-row">
+          <button class="mark got ${state.mark === 'got' ? 'active' : ''}" data-idx="${idx}" data-mark="got">✓ got it</button>
+          <button class="mark missed ${state.mark === 'missed' ? 'active' : ''}" data-idx="${idx}" data-mark="missed">✗ missed it</button>
+        </div>
+      </div>
+    `;
+    stack.appendChild(card);
+  });
+
+  stack.querySelectorAll('.reveal-bar .btn').forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.dataset.idx;
+      userState[i].revealed = !userState[i].revealed;
+      render();
+    };
+  });
+  stack.querySelectorAll('.mark').forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.dataset.idx;
+      const m = btn.dataset.mark;
+      userState[i].mark = userState[i].mark === m ? null : m;
+      render();
+      updateStats();
+    };
+  });
+
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent = QUESTIONS.length;
+  document.getElementById('statGot').textContent = userState.filter(s => s.mark === 'got').length;
+  document.getElementById('statMissed').textContent = userState.filter(s => s.mark === 'missed').length;
+}
+
+render();
+</script>
+</body>
+</html>
