@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Output Practice — 100 Questions</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #11161d;
+    --border: #232a34;
+    --text: #d5dae2;
+    --dim: #7b8493;
+    --accent: #4fd1c5;
+    --err: #ff6b6b;
+    --code-bg: #0a0e13;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "SF Mono", "Consolas", "Menlo", monospace;
+    padding: 24px 16px 80px;
+  }
+  header {
+    max-width: 860px;
+    margin: 0 auto 24px;
+  }
+  header h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  header p {
+    color: var(--dim);
+    font-size: 13px;
+    margin: 0 0 16px;
+  }
+  .controls {
+    max-width: 860px;
+    margin: 0 auto 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  select, input[type="text"] {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+  .stat {
+    color: var(--dim);
+    font-size: 12px;
+    margin-left: auto;
+  }
+  .grid {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-head .id {
+    color: var(--dim);
+    font-size: 12px;
+  }
+  .card-head .cat {
+    color: var(--accent);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  pre.code {
+    margin: 0;
+    padding: 14px;
+    background: var(--code-bg);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--border);
+  }
+  button.run {
+    background: var(--accent);
+    color: #05201d;
+    border: none;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button.run:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .running-note {
+    color: var(--dim);
+    font-size: 12px;
+  }
+  .console {
+    display: none;
+    padding: 10px 14px;
+    background: #000;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    min-height: 20px;
+  }
+  .console.visible { display: block; }
+  .console .line {
+    color: #8fe3a8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .console .line.error { color: var(--err); }
+  .console .empty { color: var(--dim); font-style: italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>JS Output Practice — 100 Questions</h1>
+  <p>Predict the output, then hit Run. Every snippet actually executes in your browser — the console below is real, not a hardcoded answer.</p>
+</header>
+
+<div class="controls">
+  <select id="catFilter">
+    <option value="">All categories</option>
+  </select>
+  <span class="stat" id="stat">0 / 0 run</span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const questions = [
+  { cat: "Hoisting & Scope", code: 'console.log(x);\nvar x = 10;' },
+  { cat: "Hoisting & Scope", code: 'try {\n  console.log(y);\n} catch (e) {\n  console.log(e.message);\n}\nlet y = 10;' },
+  { cat: "Hoisting & Scope", code: 'try {\n  console.log(typeof z);\n} catch (e) {\n  console.log("Error:", e.message);\n}\nlet z = 10;' },
+  { cat: "Hoisting & Scope", code: 'function foo() {\n  console.log(a);\n  var a = 1;\n  console.log(a);\n}\nfoo();' },
+  { cat: "Hoisting & Scope", code: '{\n  function foo() { return 1; }\n}\nconsole.log(typeof foo);' },
+  { cat: "Hoisting & Scope", code: 'console.log(typeof undeclaredVar);' },
+  { cat: "Hoisting & Scope", code: 'var x = 1;\nfunction test() {\n  console.log(x);\n  var x = 2;\n}\ntest();' },
+  { cat: "Hoisting & Scope", code: 'let i;\nfor (i = 0; i < 5; i++) {\n  if (i === 3) break;\n}\nconsole.log(i);' },
+  { cat: "Hoisting & Scope", code: 'try {\n  eval(`\n    function test(x) {\n      switch (x) {\n        case 1:\n          let msg = "one";\n          console.log(msg);\n          break;\n        case 2:\n          let msg = "two";\n          console.log(msg);\n          break;\n      }\n    }\n    test(1);\n  `);\n} catch (e) {\n  console.log("Error:", e.message);\n}' },
+  { cat: "Hoisting & Scope", code: 'console.log(1);\n{\n  console.log(2);\n  var a = 3;\n}\nconsole.log(a);\nconsole.log(typeof b);\n{\n  let b = 4;\n}' },
+
+  { cat: "Closures", code: 'function counter() {\n  let count = 0;\n  return function () {\n    count++;\n    return count;\n  };\n}\nconst c1 = counter();\nconsole.log(c1());\nconsole.log(c1());\nconst c2 = counter();\nconsole.log(c2());' },
+  { cat: "Closures", code: 'function makeAdders() {\n  const adders = [];\n  for (let i = 1; i <= 3; i++) {\n    adders.push(x => x + i);\n  }\n  return adders;\n}\nconst [add1, add2, add3] = makeAdders();\nconsole.log(add1(10), add2(10), add3(10));' },
+  { cat: "Closures", code: 'function outer() {\n  var a = 1;\n  function inner() {\n    console.log(a);\n    var a = 2;\n  }\n  inner();\n}\nouter();' },
+  { cat: "Closures", code: 'const funcs = [];\nfunction build() {\n  var i;\n  for (i = 0; i < 3; i++) {\n    funcs.push(function () { return i; });\n  }\n}\nbuild();\nconsole.log(funcs.map(f => f()));' },
+  { cat: "Closures", code: 'function memoize(fn) {\n  const cache = {};\n  return function (n) {\n    if (n in cache) {\n      console.log("cache hit");\n      return cache[n];\n    }\n    console.log("computing");\n    return (cache[n] = fn(n));\n  };\n}\nconst square = memoize(n => n * n);\nconsole.log(square(4));\nconsole.log(square(4));\nconsole.log(square(5));' },
+  { cat: "Closures", code: 'function once(fn) {\n  let called = false;\n  let result;\n  return function (...args) {\n    if (!called) {\n      result = fn(...args);\n      called = true;\n    }\n    return result;\n  };\n}\nconst init = once(() => { console.log("initializing"); return 42; });\nconsole.log(init());\nconsole.log(init());' },
+  { cat: "Closures", code: 'function makeCounter() {\n  let secret = "hidden";\n  return {\n    reveal: () => secret\n  };\n}\nconst box = makeCounter();\nconsole.log(box.reveal());\nconsole.log(box.secret);' },
+  { cat: "Closures", code: 'console.log(\n  (function (x) {\n    return function (y) {\n      return x + y;\n    };\n  })(3)(4)\n);' },
+  { cat: "Closures", code: 'let counter = 0;\nfunction increment() {\n  counter++;\n  return counter;\n}\nconst a = increment();\nconst b = increment();\nconsole.log(a, b, counter);' },
+  { cat: "Closures", code: 'function createBankAccount(balance) {\n  return {\n    deposit(amount) { balance += amount; return balance; },\n    withdraw(amount) { balance -= amount; return balance; }\n  };\n}\nconst acc = createBankAccount(100);\nconsole.log(acc.deposit(50));\nconsole.log(acc.withdraw(30));' },
+  { cat: "Closures", code: 'function tagger() {\n  let id = 0;\n  return () => `item-${++id}`;\n}\nconst next = tagger();\nconsole.log(next(), next(), next());' },
+
+  { cat: "this & Binding", code: 'function whoAmI() { console.log(this === globalThis); }\nconst obj = { whoAmI };\nobj.whoAmI();\nconst detached = obj.whoAmI;\ndetached();' },
+  { cat: "this & Binding", code: 'const obj2 = {\n  value: 42,\n  getValue: function () { return this.value; },\n  getValueArrow: () => { return this && this.value; }\n};\nconsole.log(obj2.getValue());\nconsole.log(obj2.getValueArrow());' },
+  { cat: "this & Binding", code: 'function Person(name) {\n  this.name = name;\n}\nPerson.prototype.greet = function () {\n  console.log("Hi, this is " + this.name);\n};\nconst p = new Person("Sam");\nconst greetFn = p.greet;\ntry {\n  greetFn();\n} catch (e) {\n  console.log("Error:", e.message);\n}' },
+  { cat: "this & Binding", code: 'function add(a, b) { return a + b; }\nconst boundAdd = add.bind(null, 5);\nconsole.log(boundAdd(10));\nconsole.log(add.call(null, 2, 3));\nconsole.log(add.apply(null, [7, 8]));' },
+  { cat: "this & Binding", code: 'const obj3 = {\n  name: "Bob",\n  greet() {\n    setTimeout(function () {\n      console.log("Regular:", this && this.name);\n    }, 0);\n    setTimeout(() => {\n      console.log("Arrow:", this.name);\n    }, 0);\n  }\n};\nobj3.greet();' },
+  { cat: "this & Binding", code: 'class Counter {\n  count = 0;\n  incrementRegular() { this.count++; }\n  incrementArrow = () => { this.count++; };\n}\nconst counter = new Counter();\nconst { incrementRegular, incrementArrow } = counter;\ntry {\n  incrementRegular();\n} catch (e) {\n  console.log("regular failed");\n}\nincrementArrow();\nconsole.log(counter.count);' },
+  { cat: "this & Binding", code: 'function Foo() {\n  this.value = 10;\n  return { value: 20 };\n}\nconst f = new Foo();\nconsole.log(f.value);' },
+  { cat: "this & Binding", code: 'function Bar() {\n  this.value = 10;\n  return 20;\n}\nconst b = new Bar();\nconsole.log(b.value);' },
+  { cat: "this & Binding", code: 'const target = { name: "target" };\nfunction show() { console.log(this.name); }\nconst bound1 = show.bind(target);\nconst bound2 = bound1.bind({ name: "other" });\nbound2();' },
+  { cat: "this & Binding", code: 'const obj4 = {\n  data: [1, 2, 3],\n  printAll() {\n    this.data.forEach(function (item) {\n      console.log(this === undefined || this === globalThis ? item : "?");\n    });\n  }\n};\nobj4.printAll();' },
+
+  { cat: "Equality & Coercion", code: 'console.log(1 == "1");\nconsole.log(1 === "1");\nconsole.log(null == undefined);\nconsole.log(null === undefined);' },
+  { cat: "Equality & Coercion", code: 'console.log(NaN === NaN);\nconsole.log(Object.is(NaN, NaN));\nconsole.log([1] == 1);\nconsole.log([] == false);' },
+  { cat: "Equality & Coercion", code: 'console.log("5" + 3);\nconsole.log("5" - 3);\nconsole.log("5" + 3 - 2);\nconsole.log(3 + 4 + "5");' },
+  { cat: "Equality & Coercion", code: 'console.log(true + true);\nconsole.log(true + "1");\nconsole.log([] + []);\nconsole.log([] + {});' },
+  { cat: "Equality & Coercion", code: 'console.log(0.1 + 0.2);\nconsole.log(0.1 + 0.2 === 0.3);' },
+  { cat: "Equality & Coercion", code: 'console.log(!!"");\nconsole.log(!!"0");\nconsole.log(!!0);\nconsole.log(!!null);\nconsole.log(!!undefined);\nconsole.log(!![]);' },
+  { cat: "Equality & Coercion", code: 'console.log(typeof null);\nconsole.log(typeof undefined);\nconsole.log(typeof NaN);\nconsole.log(typeof function () {});' },
+  { cat: "Equality & Coercion", code: 'console.log([1, 2, 3] + [4, 5, 6]);\nconsole.log(+"42");\nconsole.log(+"abc");\nconsole.log(+true);' },
+  { cat: "Equality & Coercion", code: 'console.log(1 < 2 < 3);\nconsole.log(3 > 2 > 1);' },
+  { cat: "Equality & Coercion", code: 'console.log("b" + "a" + +"a" + "a");' },
+
+  { cat: "Arrays", code: 'const arr = [1, 2, 3];\narr.length = 1;\nconsole.log(arr);' },
+  { cat: "Arrays", code: 'const arr2 = [1, , 3];\nconsole.log(arr2.length);\nconsole.log(arr2[1]);' },
+  { cat: "Arrays", code: 'console.log([1, 2, 3].map(x => x * 2).filter(x => x > 2));' },
+  { cat: "Arrays", code: 'console.log([3, 1, 2].sort());\nconsole.log([10, 1, 2].sort());' },
+  { cat: "Arrays", code: 'const a = [1, 2, 3];\nconst b = a;\nb.push(4);\nconsole.log(a);' },
+  { cat: "Arrays", code: 'console.log([1, [2, 3], [4, [5, 6]]].flat());\nconsole.log([1, [2, [3, [4]]]].flat(Infinity));' },
+  { cat: "Arrays", code: 'console.log(Array(3));\nconsole.log(Array(3).fill(0));\nconsole.log(Array.from({ length: 3 }, (_, i) => i * 2));' },
+  { cat: "Arrays", code: 'const arr3 = [1, 2, 3];\nconsole.log(arr3.reduce((acc, cur) => acc + cur));\nconsole.log([].reduce((a, c) => a + c, 0));' },
+  { cat: "Arrays", code: 'console.log([1, 2, 3].includes(2));\nconsole.log([NaN].includes(NaN));\nconsole.log([NaN].indexOf(NaN));' },
+  { cat: "Arrays", code: 'const nums = [1, 2, 3];\ndelete nums[1];\nconsole.log(nums);\nconsole.log(nums.length);' },
+
+  { cat: "Objects & Prototypes", code: 'const obj = { a: 1 };\nconsole.log(obj.hasOwnProperty("a"));\nconsole.log("toString" in obj);\nconsole.log(obj.hasOwnProperty("toString"));' },
+  { cat: "Objects & Prototypes", code: 'function Animal(name) { this.name = name; }\nAnimal.prototype.speak = function () { return this.name + " makes a noise"; };\nconst dog = new Animal("Rex");\nconsole.log(dog.speak());\nconsole.log(Object.getPrototypeOf(dog) === Animal.prototype);' },
+  { cat: "Objects & Prototypes", code: 'const parent = { greet() { return "hi"; } };\nconst child = Object.create(parent);\nchild.name = "c";\nconsole.log(child.greet());\nconsole.log(Object.keys(child));' },
+  { cat: "Objects & Prototypes", code: 'const obj2 = {\n  get value() { return 42; },\n  set value(v) { console.log("setting to", v); }\n};\nconsole.log(obj2.value);\nobj2.value = 100;' },
+  { cat: "Objects & Prototypes", code: '"use strict";\nconst frozen = Object.freeze({ a: 1 });\ntry {\n  frozen.a = 2;\n  console.log(frozen.a);\n} catch (e) {\n  console.log("Error:", e.message);\n}' },
+  { cat: "Objects & Prototypes", code: 'const a = { x: 1 };\nconst b = { x: 1 };\nconsole.log(a === b);\nconsole.log(JSON.stringify(a) === JSON.stringify(b));' },
+  { cat: "Objects & Prototypes", code: 'function Base() {}\nBase.prototype.type = "base";\nfunction Derived() {}\nDerived.prototype = Object.create(Base.prototype);\nconst d = new Derived();\nconsole.log(d.type);\nconsole.log(d instanceof Base);\nconsole.log(d instanceof Derived);' },
+  { cat: "Objects & Prototypes", code: 'const obj3 = { a: 1, b: 2, c: 3 };\nconst { a, ...rest } = obj3;\nconsole.log(a);\nconsole.log(rest);' },
+  { cat: "Objects & Prototypes", code: 'const sym = Symbol("id");\nconst obj4 = { [sym]: 123, name: "test" };\nconsole.log(Object.keys(obj4));\nconsole.log(obj4[sym]);' },
+  { cat: "Objects & Prototypes", code: 'console.log(Object.entries({ a: 1, b: 2 }));\nconsole.log(Object.fromEntries([["x", 1], ["y", 2]]));' },
+
+  { cat: "Event Loop & Async", code: 'console.log("1");\nsetTimeout(() => console.log("2"), 0);\nPromise.resolve().then(() => console.log("3"));\nconsole.log("4");' },
+  { cat: "Event Loop & Async", code: 'async function foo() {\n  console.log("a");\n  await null;\n  console.log("b");\n}\nconsole.log("start");\nfoo();\nconsole.log("end");' },
+  { cat: "Event Loop & Async", code: 'console.log("1");\nsetTimeout(() => console.log("2"), 0);\nsetTimeout(() => console.log("3"), 0);\nPromise.resolve().then(() => console.log("4")).then(() => console.log("5"));\nconsole.log("6");' },
+  { cat: "Event Loop & Async", code: 'async function getData() { return 42; }\ngetData().then(v => console.log(v));\nconsole.log("sync");' },
+  { cat: "Event Loop & Async", code: 'async function foo() {\n  try {\n    await Promise.reject("err");\n  } catch (e) {\n    console.log("caught", e);\n  }\n}\nfoo();' },
+  { cat: "Event Loop & Async", code: 'new Promise((resolve) => {\n  console.log("promise executor");\n  resolve(1);\n})\n  .then(v => {\n    console.log("then", v);\n    return v + 1;\n  })\n  .then(v => console.log("then2", v));' },
+  { cat: "Event Loop & Async", code: '(async () => {\n  console.log("a");\n  await new Promise(r => setTimeout(r, 0));\n  console.log("b");\n})();\nconsole.log("c");' },
+  { cat: "Event Loop & Async", code: 'Promise.all([\n  Promise.resolve(1),\n  Promise.resolve(2),\n  new Promise(r => setTimeout(() => r(3), 10))\n]).then(vals => console.log(vals));' },
+  { cat: "Event Loop & Async", code: 'console.log("1");\nqueueMicrotask(() => console.log("microtask"));\nsetTimeout(() => console.log("macrotask"), 0);\nconsole.log("2");' },
+  { cat: "Event Loop & Async", code: 'function delay(ms, val) {\n  return new Promise(r => setTimeout(() => r(val), ms));\n}\nasync function run() {\n  console.log(await delay(10, "a"));\n  console.log(await delay(5, "b"));\n}\nrun();\nconsole.log("sync end");' },
+
+  { cat: "Destructuring / Spread / Rest", code: 'const [a, b, ...rest] = [1, 2, 3, 4, 5];\nconsole.log(a, b, rest);' },
+  { cat: "Destructuring / Spread / Rest", code: 'const { x = 10, y = 20 } = { x: 5 };\nconsole.log(x, y);' },
+  { cat: "Destructuring / Spread / Rest", code: 'const [a1, [b1, c1]] = [1, [2, 3]];\nconsole.log(a1, b1, c1);' },
+  { cat: "Destructuring / Spread / Rest", code: 'function sum(...nums) { return nums.reduce((a, b) => a + b, 0); }\nconsole.log(sum(1, 2, 3, 4));' },
+  { cat: "Destructuring / Spread / Rest", code: 'const obj = { a: 1, b: 2 };\nconst arr = [1, 2, 3];\nconsole.log({ ...obj, c: 3 });\nconsole.log([...arr, 4, 5]);' },
+  { cat: "Destructuring / Spread / Rest", code: 'let a2 = 1, b2 = 2;\n[a2, b2] = [b2, a2];\nconsole.log(a2, b2);' },
+  { cat: "Destructuring / Spread / Rest", code: 'function greet({ name, greeting = "Hello" } = {}) {\n  console.log(`${greeting}, ${name}`);\n}\ngreet({ name: "Alice" });\ntry {\n  greet(undefined);\n} catch (e) {\n  console.log("error:", e.message);\n}' },
+  { cat: "Destructuring / Spread / Rest", code: 'const [first, , third] = [1, 2, 3];\nconsole.log(first, third);' },
+  { cat: "Destructuring / Spread / Rest", code: 'const nested = { a: { b: { c: 42 } } };\nconst { a: { b: { c } } } = nested;\nconsole.log(c);' },
+  { cat: "Destructuring / Spread / Rest", code: 'const str = "hello";\nconst [c1, ...restChars] = str;\nconsole.log(c1, restChars);' },
+
+  { cat: "Classes", code: 'class Animal {\n  constructor(name) { this.name = name; }\n  speak() { return `${this.name} makes a sound`; }\n}\nclass Dog extends Animal {\n  speak() { return `${super.speak()}, specifically barks`; }\n}\nconsole.log(new Dog("Rex").speak());' },
+  { cat: "Classes", code: 'class Counter {\n  static count = 0;\n  constructor() { Counter.count++; }\n}\nnew Counter();\nnew Counter();\nconsole.log(Counter.count);' },
+  { cat: "Classes", code: 'class Base {\n  #secret = 42;\n  getSecret() { return this.#secret; }\n}\nconst b3 = new Base();\nconsole.log(b3.getSecret());\ntry {\n  console.log(eval("b3.#secret"));\n} catch (e) {\n  console.log("blocked");\n}' },
+  { cat: "Classes", code: 'class Shape {\n  area() { return 0; }\n}\nclass Circle extends Shape {\n  constructor(r) { super(); this.r = r; }\n  area() { return Math.PI * this.r ** 2; }\n}\nconsole.log(new Circle(2).area().toFixed(2));' },
+  { cat: "Classes", code: 'class A {\n  static create() { return new this(); }\n  greet() { return "A"; }\n}\nclass B extends A {\n  greet() { return "B"; }\n}\nconsole.log(B.create().greet());' },
+  { cat: "Classes", code: 'class Person {\n  constructor(name) { this.name = name; }\n  toString() { return `Person(${this.name})`; }\n}\nconsole.log(`${new Person("Sam")}`);\nconsole.log(new Person("Sam") + "");' },
+  { cat: "Classes", code: 'class Vehicle {\n  constructor() {\n    if (new.target === Vehicle) {\n      throw new Error("Cannot instantiate directly");\n    }\n  }\n}\nclass Car extends Vehicle {}\ntry {\n  new Vehicle();\n} catch (e) {\n  console.log(e.message);\n}\nconsole.log(new Car() instanceof Vehicle);' },
+  { cat: "Classes", code: 'class Node {\n  constructor(val) { this.val = val; this.next = null; }\n}\nconst n1 = new Node(1);\nconst n2 = new Node(2);\nn1.next = n2;\nconsole.log(n1.next.val);\nconsole.log(n1 instanceof Node);' },
+  { cat: "Classes", code: 'class Empty {}\nconsole.log(typeof Empty);\nconsole.log(Empty.prototype.constructor === Empty);' },
+  { cat: "Classes", code: 'class Parent {\n  greet() { return "parent"; }\n}\nclass Child extends Parent {\n  greet() { return super.greet() + " -> child"; }\n}\nclass GrandChild extends Child {\n  greet() { return super.greet() + " -> grandchild"; }\n}\nconsole.log(new GrandChild().greet());' },
+
+  { cat: "Misc", code: 'function* gen() {\n  yield 1;\n  yield 2;\n  yield 3;\n}\nconst g = gen();\nconsole.log(g.next());\nconsole.log(g.next().value);\nconsole.log([...gen()]);' },
+  { cat: "Misc", code: 'const obj = { a: 1 };\nconsole.log(obj?.b?.c);\nconsole.log(obj?.a);\nconst arr = null;\nconsole.log(arr?.[0]);' },
+  { cat: "Misc", code: 'console.log(0 ?? "default");\nconsole.log(null ?? "default");\nconsole.log("" ?? "default");\nconsole.log(undefined ?? "default");' },
+  { cat: "Misc", code: 'function tag(strings, ...values) {\n  return strings.reduce((acc, s, i) => acc + s + (values[i] !== undefined ? `[${values[i]}]` : ""), "");\n}\nconst name = "World";\nconsole.log(tag`Hello, ${name}!`);' },
+  { cat: "Misc", code: 'outer: for (let i = 0; i < 3; i++) {\n  for (let j = 0; j < 3; j++) {\n    if (j === 1) continue outer;\n    console.log(i, j);\n  }\n}' },
+  { cat: "Misc", code: 'function test() {\n  try {\n    return 1;\n  } finally {\n    console.log("finally");\n  }\n}\nconsole.log(test());' },
+  { cat: "Misc", code: 'function test2() {\n  try {\n    return 1;\n  } finally {\n    return 2;\n  }\n}\nconsole.log(test2());' },
+  { cat: "Misc", code: 'const map = new Map();\nmap.set("a", 1).set("b", 2);\nconsole.log(map.get("a"));\nconsole.log([...map.entries()]);\nconsole.log(map.size);' },
+  { cat: "Misc", code: 'const set = new Set([1, 2, 2, 3, 3, 3]);\nconsole.log([...set]);\nconsole.log(set.size);' },
+  { cat: "Misc", code: 'console.log(typeof Symbol());\nconst s1 = Symbol("x");\nconst s2 = Symbol("x");\nconsole.log(s1 === s2);' }
+];
+
+let ranCount = 0;
+const grid = document.getElementById("grid");
+const catFilter = document.getElementById("catFilter");
+const stat = document.getElementById("stat");
+
+const cats = [...new Set(questions.map(q => q.cat))];
+cats.forEach(c => {
+  const opt = document.createElement("option");
+  opt.value = c;
+  opt.textContent = c;
+  catFilter.appendChild(opt);
+});
+
+function formatArg(a) {
+  if (typeof a === "string") return a;
+  if (a === undefined) return "undefined";
+  try {
+    if (a instanceof Error) return a.toString();
+    return JSON.stringify(a, (k, v) => (typeof v === "bigint" ? v.toString() : v));
+  } catch {
+    return String(a);
+  }
+}
+
+let activeOutputEl = null;
+const nativeLog = console.log.bind(console);
+console.log = (...args) => {
+  nativeLog(...args);
+  if (activeOutputEl) {
+    const line = document.createElement("div");
+    line.className = "line";
+    line.textContent = args.map(formatArg).join(" ");
+    activeOutputEl.appendChild(line);
+  }
+};
+
+function buildCard(q, index) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.dataset.cat = q.cat;
+
+  const head = document.createElement("div");
+  head.className = "card-head";
+  head.innerHTML = `<span class="id">Q${index + 1}</span><span class="cat">${q.cat}</span>`;
+  card.appendChild(head);
+
+  const pre = document.createElement("pre");
+  pre.className = "code";
+  pre.textContent = q.code;
+  card.appendChild(pre);
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+  const btn = document.createElement("button");
+  btn.className = "run";
+  btn.textContent = "Run";
+  actions.appendChild(btn);
+  card.appendChild(actions);
+
+  const output = document.createElement("div");
+  output.className = "console";
+  card.appendChild(output);
+
+  let hasRun = false;
+  btn.addEventListener("click", async () => {
+    output.classList.add("visible");
+    output.innerHTML = "";
+    btn.disabled = true;
+    btn.textContent = "Running…";
+    activeOutputEl = output;
+    try {
+      await eval("(async () => {\n" + q.code + "\n})()");
+    } catch (e) {
+      const line = document.createElement("div");
+      line.className = "line error";
+      line.textContent = "Uncaught " + (e && e.message ? e.message : e);
+      output.appendChild(line);
+    }
+    await new Promise(r => setTimeout(r, 500));
+    activeOutputEl = null;
+    if (output.children.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "(no output)";
+      output.appendChild(empty);
+    }
+    btn.disabled = false;
+    btn.textContent = "Run again";
+    if (!hasRun) {
+      hasRun = true;
+      ranCount++;
+      stat.textContent = `${ranCount} / ${questions.length} run`;
+    }
+  });
+
+  return card;
+}
+
+questions.forEach((q, i) => grid.appendChild(buildCard(q, i)));
+stat.textContent = `0 / ${questions.length} run`;
+
+catFilter.addEventListener("change", () => {
+  const val = catFilter.value;
+  document.querySelectorAll(".card").forEach(card => {
+    card.style.display = !val || card.dataset.cat === val ? "" : "none";
+  });
+});
+</script>
+</body>
+</html>
